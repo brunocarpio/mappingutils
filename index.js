@@ -111,11 +111,18 @@ export function mapObj(source, mappings) {
             arrToMerge.add(to);
         }
     }
+    for (let [k, v] of outputObjects) {
+        let filtered = v.filter((obj) => Object.keys(obj).length > 0);
+        if (filtered.length === 0) {
+            outputObjects.delete(k);
+            continue;
+        }
+        outputObjects.set(k, filtered);
+    }
     for (let to of arrToMerge.values()) {
         for (let k of outputObjects.keys()) {
             outputObjects.set(k, [mergeObjArr(outputObjects.get(k), to)]);
         }
     }
-    let outPutArr = Array.from(outputObjects.values()).flat();
-    return outPutArr.filter((obj) => Object.keys(obj).length > 0);
+    return Array.from(outputObjects.values()).flat();
 }
