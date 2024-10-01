@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "author": "bcarpio181@gmail.com",
   "type": "module",
+  "main": "index.js",
   "directories": {
     "test": "test"
   },

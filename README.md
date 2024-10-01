@@ -46,7 +46,7 @@ let source = `
 }
 `;
 
-import { mapObj } from "mappingUtils";
+import { mapObj } from "mappingutils";
 
 let transformation = [
     {
@@ -103,6 +103,8 @@ It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) synta
 Another example where grouping by books for the fiction category using the same input as before.
 
 ```javascript
+import { mapObj, mergeObjArr } from "mappingutils";
+
 let transformation = [
     {
         from: 'store.book[?(@.category=="fiction")].category',
