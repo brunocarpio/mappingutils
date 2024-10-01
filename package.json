@@ -1,5 +1,5 @@
 {
-  "name": "mappingUtils",
+  "name": "mappingutils",
   "description": "Transform input objects with ease.",
   "version": "0.1.0",
   "author": "bcarpio181@gmail.com",
@@ -26,5 +26,9 @@
     "mapping",
     "transformation"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brunocarpio/mappingUtils"
+  },
   "license": "MIT"
 }

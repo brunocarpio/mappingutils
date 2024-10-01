@@ -116,6 +116,6 @@ export function mapObj(source, mappings) {
             outputObjects.set(k, [mergeObjArr(outputObjects.get(k), to)]);
         }
     }
-    if (Object.keys(outputObjects.get(0)[0]).length === 0) return [];
-    return Array.from(outputObjects.values()).flat();
+    let outPutArr = Array.from(outputObjects.values()).flat();
+    return outPutArr.filter((obj) => Object.keys(obj).length > 0);
 }
