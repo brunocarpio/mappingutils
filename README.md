@@ -6,6 +6,8 @@ Transform input objects with ease.
 ## MapObj Example
 
 ```javascript
+import { mapObj } from "mappingutils";
+
 let source = `
 {
     "store": {
@@ -45,8 +47,6 @@ let source = `
     "expensive": 10
 }
 `;
-
-import { mapObj } from "mappingutils";
 
 let transformation = [
     {
