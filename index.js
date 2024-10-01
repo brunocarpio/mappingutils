@@ -3,10 +3,11 @@
 import jp from "jsonpath";
 
 /**
- * @param {object} obj
+ * Add a `key` property to the object `obj` with the value `value`.
+ * @param {object} obj input object.
  * @param {string} key
  * @param {object} value
- * @returns {object} a deep copy of the object with the new prop added
+ * @returns {object} a deep copy of the object with the new property added.
  */
 export function addProp(obj, key, value) {
     obj = structuredClone(obj);
@@ -22,9 +23,10 @@ export function addProp(obj, key, value) {
 }
 
 /**
- * @param {Array.<object>} objArr an array of objects
- * @param {string} prop name of the array property to merge
- * @returns {object} a deep copy of the first object, with the prop array elements concatenated
+ * Merge the `prop` array values of  the object `objArr`.
+ * @param {Array.<object>} objArr an array of objects.
+ * @param {string} prop key name of the array property to merge.
+ * @returns {object} a deep copy of the first object in the array, with the `prop` array values concatenated.
  */
 export function mergeObjArr(objArr, prop) {
     objArr = structuredClone(objArr);
@@ -39,9 +41,10 @@ export function mergeObjArr(objArr, prop) {
 }
 
 /**
- * @param {Array.<object>} source an array of objects
- * @param {Array.<{from: string, to: string}>} mappings an array of transformations to apply to every object
- * @returns {Array.<object>} an array of objects resulting from transforming the input objects
+ * Transforms an input array of objects `source` given the provided array of mappings `mappings`.
+ * @param {Array.<object>} source an array of objects.
+ * @param {Array.<{from: string, to: string}>} mappings an array of transformations to apply to every object.
+ * @returns {Array.<object>} an array of objects resulting from transforming the input objects.
  */
 export function mapObjArr(source, mappings) {
     let result = [];
@@ -55,9 +58,10 @@ export function mapObjArr(source, mappings) {
 }
 
 /**
- * @param {object} source input object
- * @param {Array.<{from: string, to: string}>} mappings an array of transformations to apply to the input object
- * @returns {Array.<object>} an array of objects resulting from transforming the input object
+ * Transforms an input object `source` given the provided array of mappings `mappings`.
+ * @param {object} source input object.
+ * @param {Array.<{from: string, to: string}>} mappings an array of transformations to apply to the input object.
+ * @returns {Array.<object>} an array of objects resulting from transforming the input object.
  */
 export function mapObj(source, mappings) {
     let outputObjects = new Map();
