@@ -80,11 +80,15 @@ export function mapObj(source, mappings) {
                     }
                 }
             } else {
+                let groupNumbers = [];
                 let nodesGroup = Map.groupBy(nodes, (node) => {
                     for (let el of node.path) {
-                        if (typeof el === "number") return el;
+                        if (typeof el === "number") {
+                            if (groupNumbers.indexOf(el) === -1)
+                                groupNumbers.push(el);
+                            return groupNumbers.indexOf(el);
+                        }
                     }
-                    return -1;
                 });
                 for (let [k, v] of nodesGroup) {
                     let arr, obj;

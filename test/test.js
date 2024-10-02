@@ -476,148 +476,246 @@ describe("mapping array values in the source object", () => {
         let arr = mapObj(source, transformation);
         assert.deepEqual(arr, target);
     });
+});
 
-    describe("mapping array values in the target object", () => {
-        let source = {
-            date: "20240921",
-            items: [
+describe("mapping array values in the target object", () => {
+    let source = {
+        date: "20240921",
+        items: [
+            {
+                item: 11111,
+                availableCountries: [
+                    {
+                        country: "US",
+                        countryName: "United States",
+                    },
+                    {
+                        country: "PE",
+                        countryName: "Peru",
+                    },
+                    {
+                        country: "CH",
+                        countryName: "Chile",
+                    },
+                ],
+            },
+            {
+                item: 22222,
+                availableCountries: [
+                    {
+                        country: "UY",
+                        countryName: "Uruguay",
+                    },
+                ],
+            },
+            {
+                item: 33333,
+                availableCountries: [
+                    {
+                        country: "BR",
+                        countryName: "Brasil",
+                    },
+                ],
+            },
+        ],
+    };
+
+    it("should aggregate all countries for item", () => {
+        let transformation = [
+            {
+                from: "date",
+                to: "date",
+            },
+            {
+                from: "items[*].item",
+                to: "item",
+            },
+            {
+                from: "items[*].availableCountries[*].country",
+                to: "availableCountries[]",
+            },
+        ];
+
+        let target = [
+            {
+                date: "20240921",
+                item: 11111,
+                availableCountries: ["US", "PE", "CH"],
+            },
+            {
+                date: "20240921",
+                item: 22222,
+                availableCountries: ["UY"],
+            },
+            {
+                date: "20240921",
+                item: 33333,
+                availableCountries: ["BR"],
+            },
+        ];
+        let arr = mapObj(source, transformation);
+        assert.deepEqual(arr, target);
+    });
+
+    it("should add properties to objects in the target array", () => {
+        let transformation = [
+            {
+                from: "date",
+                to: "date",
+            },
+            {
+                from: "items[*].item",
+                to: "item",
+            },
+            {
+                from: "items[*].availableCountries[*].country",
+                to: "availableCountries[].code",
+            },
+            {
+                from: "items[*].availableCountries[*].countryName",
+                to: "availableCountries[].name",
+            },
+        ];
+
+        let target = [
+            {
+                date: "20240921",
+                item: 11111,
+                availableCountries: [
+                    {
+                        code: "US",
+                        name: "United States",
+                    },
+                    {
+                        code: "PE",
+                        name: "Peru",
+                    },
+                    {
+                        code: "CH",
+                        name: "Chile",
+                    },
+                ],
+            },
+            {
+                date: "20240921",
+                item: 22222,
+                availableCountries: [
+                    {
+                        code: "UY",
+                        name: "Uruguay",
+                    },
+                ],
+            },
+            {
+                date: "20240921",
+                item: 33333,
+                availableCountries: [{ code: "BR", name: "Brasil" }],
+            },
+        ];
+        let arr = mapObj(source, transformation);
+        assert.deepEqual(arr, target);
+    });
+});
+
+describe("mapping with filters in the source", () => {
+    let source = `
+    {
+        "storeNumber": "098",
+        "store": {
+            "book": [ 
                 {
-                    item: 11111,
-                    availableCountries: [
-                        {
-                            country: "US",
-                            countryName: "United States",
-                        },
-                        {
-                            country: "PE",
-                            countryName: "Peru",
-                        },
-                        {
-                            country: "CH",
-                            countryName: "Chile",
-                        },
-                    ],
-                },
-                {
-                    item: 22222,
-                    availableCountries: [
-                        {
-                            country: "UY",
-                            countryName: "Uruguay",
-                        },
-                    ],
-                },
-                {
-                    item: 33333,
-                    availableCountries: [
-                        {
-                            country: "BR",
-                            countryName: "Brasil",
-                        },
-                    ],
-                },
+                    "category": "reference",
+                    "author": "Nigel Rees",
+                    "title": "Sayings of the Century",
+                    "price": 8.95
+                }, {
+                    "category": "fiction",
+                    "author": "Evelyn Waugh",
+                    "title": "Sword of Honour",
+                    "price": 12.99
+                }, {
+                    "category": "fiction",
+                    "author": "Herman Melville",
+                    "title": "Moby Dick",
+                    "isbn": "0-553-21311-3",
+                    "price": 8.99
+                }, {
+                    "category": "fiction",
+                    "author": "J. R. R. Tolkien",
+                    "title": "The Lord of the Rings",
+                    "isbn": "0-395-19395-8",
+                    "price": 22.99
+                }
             ],
-        };
+            "bicycle": {
+                "color": "red",
+                "price": 19.95
+            }
+        }
+    }
+    `;
+    source = JSON.parse(source);
+    it("should filter only the reference category book", () => {
+        let transformation = [
+            {
+                from: 'store.book[?(@.category=="reference")]',
+                to: "categories",
+            },
+        ];
 
-        it("should aggregate all countries for item", () => {
-            let transformation = [
-                {
-                    from: "date",
-                    to: "date",
+        let target = [
+            {
+                categories: {
+                    category: "reference",
+                    author: "Nigel Rees",
+                    title: "Sayings of the Century",
+                    price: 8.95,
                 },
-                {
-                    from: "items[*].item",
-                    to: "item",
-                },
-                {
-                    from: "items[*].availableCountries[*].country",
-                    to: "availableCountries[]",
-                },
-            ];
+            },
+        ];
+        let arr = mapObj(source, transformation);
+        assert.deepEqual(arr, target);
+    });
+    it("should filter only the fiction category books", () => {
+        let transformation = [
+            {
+                from: "storeNumber",
+                to: "store",
+            },
+            {
+                from: 'store.book[?(@.category=="fiction")].author',
+                to: "book.author",
+            },
+            {
+                from: 'store.book[?(@.category=="fiction")].title',
+                to: "book.title",
+            },
+        ];
 
-            let target = [
-                {
-                    date: "20240921",
-                    item: 11111,
-                    availableCountries: ["US", "PE", "CH"],
+        let target = [
+            {
+                store: "098",
+                book: {
+                    author: "Evelyn Waugh",
+                    title: "Sword of Honour",
                 },
-                {
-                    date: "20240921",
-                    item: 22222,
-                    availableCountries: ["UY"],
+            },
+            {
+                store: "098",
+                book: {
+                    author: "Herman Melville",
+                    title: "Moby Dick",
                 },
-                {
-                    date: "20240921",
-                    item: 33333,
-                    availableCountries: ["BR"],
+            },
+            {
+                store: "098",
+                book: {
+                    author: "J. R. R. Tolkien",
+                    title: "The Lord of the Rings",
                 },
-            ];
-            let arr = mapObj(source, transformation);
-            assert.deepEqual(arr, target);
-        });
-
-        it("should add properties to objects in the target array", () => {
-            let transformation = [
-                {
-                    from: "date",
-                    to: "date",
-                },
-                {
-                    from: "items[*].item",
-                    to: "item",
-                },
-                {
-                    from: "items[*].availableCountries[*].country",
-                    to: "availableCountries[].code",
-                },
-                {
-                    from: "items[*].availableCountries[*].countryName",
-                    to: "availableCountries[].name",
-                },
-            ];
-
-            let target = [
-                {
-                    date: "20240921",
-                    item: 11111,
-                    availableCountries: [
-                        {
-                            code: "US",
-                            name: "United States",
-                        },
-                        {
-                            code: "PE",
-                            name: "Peru",
-                        },
-                        {
-                            code: "CH",
-                            name: "Chile",
-                        },
-                    ],
-                },
-                {
-                    date: "20240921",
-                    item: 22222,
-                    availableCountries: [
-                        {
-                            code: "UY",
-                            name: "Uruguay",
-                        },
-                    ],
-                },
-                {
-                    date: "20240921",
-                    item: 33333,
-                    availableCountries: [
-                        {
-                            code: "BR",
-                            name: "Brasil",
-                        },
-                    ],
-                },
-            ];
-            let arr = mapObj(source, transformation);
-            assert.deepEqual(arr, target);
-        });
+            },
+        ];
+        let arr = mapObj(source, transformation);
+        assert.deepEqual(arr, target);
     });
 });
