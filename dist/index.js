@@ -5,10 +5,10 @@ import jp from "jsonpath";
 
 /**
  * Add a `key` property to the object `obj` with the value `value`.
- * @param {object} obj input object.
- * @param {string} key
- * @param {object} value
- * @returns {object} a deep copy of the object with the new property added.
+ * @param {object} obj - The input object.
+ * @param {string} key - The path in the resulting object to set the value.
+ * @param {object} value - The value to set.
+ * @returns {object} - A deep copy of the object with the new property added.
  */
 export function addProp(obj, key, value) {
   obj = structuredClone(obj);
@@ -24,9 +24,9 @@ export function addProp(obj, key, value) {
 
 /**
  * Merge the `prop` array values of  the object `objArr`.
- * @param {Array.<object>} objArr an array of objects.
- * @param {string} prop key name of the array property to merge.
- * @returns {object} a deep copy of the first object in the array, with the `prop` array values concatenated.
+ * @param {object[]} objArr - An array of objects.
+ * @param {string} prop - The path to the array property to merge.
+ * @returns {object} - A deep copy of the first object in the array, with the `prop` array values concatenated.
  */
 export function mergeObjArr(objArr, prop) {
   objArr = structuredClone(objArr);
@@ -42,9 +42,12 @@ export function mergeObjArr(objArr, prop) {
 
 /**
  * Transforms an input array of objects `source` given the provided array of mappings `mappings`.
- * @param {Array.<object>} source an array of objects.
- * @param {Array.<{from: string, to: string}>} mappings an array of transformations to apply to every object.
- * @returns {Array.<object>} an array of objects resulting from transforming the input objects.
+ * @param {object[]} source - An array of objects.
+ * @param {object[]} mappings - An array of transformations to apply to every input object.
+ * @param {string} mappings[].from - The query expression for looking up in the source object.
+ * @param {string} mappings[].to - The path to set the value in the target object.
+ * @param {string=} mappings[].fn - An optional function to apply to the from value.
+ * @returns {object[]} an array of objects resulting from transforming the input objects.
  */
 export function mapObjArr(source, mappings) {
   let result = [];
@@ -59,9 +62,12 @@ export function mapObjArr(source, mappings) {
 
 /**
  * Transforms an input object `source` given the provided array of mappings `mappings`.
- * @param {object} source input object.
- * @param {Array.<{from: string, to: string}>} mappings an array of transformations to apply to the input object.
- * @returns {Array.<object>} an array of objects resulting from transforming the input object.
+ * @param {object} source - The input object.
+ * @param {object[]} mappings - An array of transformations to apply to the input object.
+ * @param {string} mappings[].from - The query expression for looking up in the source object.
+ * @param {string} mappings[].to - The path to set the value in the target object.
+ * @param {string=} mappings[].fn - An optional function to apply to the from value.
+ * @returns {object[]} - An array of objects resulting from transforming the input object.
  */
 export function mapObj(source, mappings) {
   let outputObjects = new Map();
@@ -71,7 +77,13 @@ export function mapObj(source, mappings) {
     if (mapping.from) {
       let to = mapping.to;
       if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
-      let nodes = jp.nodes(source, "$." + mapping.from);
+      let nodes;
+      if (mapping.fn) {
+        let fn = mapping.fn;
+        nodes = jp.apply(source, "$." + mapping.from, fn);
+      } else {
+        nodes = jp.nodes(source, "$." + mapping.from);
+      }
       if (nodes.length === 0) continue;
       if (nodes.length === 1) {
         for (let v of outputObjects.values()) {
