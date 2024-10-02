@@ -46,7 +46,7 @@ export function mergeObjArr(objArr, prop) {
  * @param {object[]} mappings - An array of transformations to apply to every input object.
  * @param {string} mappings[].from - The query expression for looking up in the source object.
  * @param {string} mappings[].to - The path to set the value in the target object.
- * @param {string=} mappings[].fn - An optional function to apply to the from value.
+ * @param {function=} mappings[].fn - An optional function to apply to the from value.
  * @returns {object[]} an array of objects resulting from transforming the input objects.
  */
 export function mapObjArr(source, mappings) {
@@ -66,7 +66,7 @@ export function mapObjArr(source, mappings) {
  * @param {object[]} mappings - An array of transformations to apply to the input object.
  * @param {string} mappings[].from - The query expression for looking up in the source object.
  * @param {string} mappings[].to - The path to set the value in the target object.
- * @param {string=} mappings[].fn - An optional function to apply to the from value.
+ * @param {function=} mappings[].fn - An optional function to apply to the from value.
  * @returns {object[]} - An array of objects resulting from transforming the input object.
  */
 export function mapObj(source, mappings) {
