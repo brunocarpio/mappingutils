@@ -71,7 +71,13 @@ export function mapObj(source, mappings) {
         if (mapping.from) {
             let to = mapping.to;
             if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
-            let nodes = jp.nodes(source, "$." + mapping.from);
+            let nodes;
+            if (mapping.fn) {
+                let fn = mapping.fn;
+                nodes = jp.apply(source, "$." + mapping.from, fn);
+            } else {
+                nodes = jp.nodes(source, "$." + mapping.from);
+            }
             if (nodes.length === 0) continue;
             if (nodes.length === 1) {
                 for (let v of outputObjects.values()) {
