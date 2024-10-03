@@ -66,23 +66,48 @@ console.log(JSON.stringify(outputArr, null, 2));
 
 It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) syntax for selecting the values from the input and a similar syntax for the output.
 
-Another example where grouping by books for the fiction category using the same input as before.
+Another example where grouping by books for the fiction category.
 
 ```javascript
 import { mapObj, mergeObjArr } from "mappingutils";
 
+let source = {
+    store: {
+        book: [
+            {
+                category: "reference",
+                author: "Nigel Rees",
+                title: "     Sayings of the Century",
+                price: 8.95,
+            },
+            {
+                category: "fiction",
+                author: "Evelyn Waugh",
+                title: "        Sword of Honour   ",
+                price: 12.99,
+            },
+            {
+                category: "fiction",
+                author: "J. R. R. Tolkien",
+                title: "The Lord of the Rings",
+                price: 22.99,
+            },
+        ],
+    },
+};
+
 let transformation = [
     {
-        from: "store.book[*].category",
+        from: 'store.book[?(@.category=="fiction")].category',
         to: "category",
     },
     {
-        from: "store.book[*].title",
-        to: "books[].name",
+        from: 'store.book[?(@.category=="fiction")].title',
+        to: "books[].bookName",
         fn: (title) => title.trim(),
     },
     {
-        from: "store.book[*].author",
+        from: 'store.book[?(@.category=="fiction")].author',
         to: "books[].author",
         fn: (author) => author.toUpperCase(),
     },
@@ -93,15 +118,15 @@ let merged = mergeObjArr(outputArr, "books[*]");
 console.log(JSON.stringify(merged, null, 2));
 
 //{
-//  "category": "reference",
+//  "category": "fiction",
 //  "books": [
 //    {
-//      "name": "Sayings of the Century",
-//      "author": "NIGEL REES"
+//      "bookName": "Sword of Honour",
+//      "author": "EVELYN WAUGH"
 //    },
 //    {
-//      "name": "Sword of Honour",
-//      "author": "EVELYN WAUGH"
+//      "bookName": "The Lord of the Rings",
+//      "author": "J. R. R. TOLKIEN"
 //    }
 //  ]
 //}
