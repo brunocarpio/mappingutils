@@ -79,8 +79,7 @@ export function mapObj(source, mappings) {
             if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
             let nodes;
             if (mapping.fn) {
-                let fn = mapping.fn;
-                nodes = jp.apply(source, "$." + mapping.from, fn);
+                nodes = jp.apply(source, "$." + mapping.from, mapping.fn);
             } else {
                 nodes = jp.nodes(source, "$." + mapping.from);
             }
@@ -112,11 +111,11 @@ export function mapObj(source, mappings) {
                         obj = structuredClone(outputObjects.get(0)[0]);
                     }
                     for (let i = 0; i < Math.max(v.length, arr.length); i++) {
-                        if (i >= arr.length)
-                            arr.push(addProp(obj, to, v[i].value));
+                        let value = v[Math.min(i, v.length)].value;
+                        if (i >= arr.length) arr.push(addProp(obj, to, value));
                         else if (i >= v.length)
-                            arr[i] = addProp(obj, to, v[v.length - 1].value);
-                        else arr[i] = addProp(arr[i], to, v[i].value);
+                            arr[i] = addProp(obj, to, value);
+                        else arr[i] = addProp(arr[i], to, value);
                     }
                     outputObjects.set(k, arr);
                 }
