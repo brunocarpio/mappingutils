@@ -107,7 +107,7 @@ export function mapObj(source, mappings) {
             obj = structuredClone(outputObjects.get(0)[0]);
           }
           for (let i = 0; i < Math.max(v.length, arr.length); i++) {
-            let value = v[Math.min(i, v.length)].value;
+            let value = v[Math.min(i, v.length - 1)].value;
             if (mapping.fn) value = mapping.fn.call(source, value);
             if (i >= arr.length) arr.push(addProp(obj, to, value));else if (i >= v.length) arr[i] = addProp(obj, to, value);else arr[i] = addProp(arr[i], to, value);
           }
