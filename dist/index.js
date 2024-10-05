@@ -12,7 +12,6 @@ import jp from "jsonpath";
  */
 export function addProp(obj, key, value) {
   obj = structuredClone(obj);
-  key = "$." + key;
   let nodes = jp.nodes(obj, key);
   if (nodes.length === 0) {
     let star = key.lastIndexOf("*");
@@ -31,10 +30,10 @@ export function addProp(obj, key, value) {
 export function mergeObjArr(objArr, prop) {
   objArr = structuredClone(objArr);
   let firstObj = objArr.shift();
-  let arrToMerge = jp.query(firstObj, "$." + prop);
+  let arrToMerge = jp.query(firstObj, prop);
   let to = prop;
   for (let i = 0; i < objArr.length; i++) {
-    arrToMerge = arrToMerge.concat(jp.query(objArr[i], "$." + to));
+    arrToMerge = arrToMerge.concat(jp.query(objArr[i], to));
   }
   if (to.slice(-3) === "[*]") to = to.substring(0, to.length - 3);
   return addProp(firstObj, to, arrToMerge);
@@ -77,7 +76,7 @@ export function mapObj(source, mappings) {
     if (mapping.from) {
       let to = mapping.to;
       if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
-      let nodes = jp.nodes(source, "$." + mapping.from);
+      let nodes = jp.nodes(source, mapping.from);
       if (nodes.length === 0) continue;
       if (nodes.length === 1) {
         let value = nodes[0].value;

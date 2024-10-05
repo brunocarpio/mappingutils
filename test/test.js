@@ -7,8 +7,8 @@ import { describe, it } from "node:test";
 describe("mapping no nested objects", () => {
     let transformation = [
         {
-            from: "key",
-            to: "otherKey",
+            from: "$.key",
+            to: "$.otherKey",
         },
     ];
 
@@ -63,16 +63,16 @@ describe("mapping no nested objects", () => {
     it("should map all types with a different name in the target", () => {
         let transformation = [
             {
-                from: "number",
-                to: "otherNumber",
+                from: "$.number",
+                to: "$.otherNumber",
             },
             {
-                from: "array",
-                to: "otherArray",
+                from: "$.array",
+                to: "$.otherArray",
             },
             {
-                from: "object",
-                to: "otherObject",
+                from: "$.object",
+                to: "$.otherObject",
             },
         ];
 
@@ -101,8 +101,8 @@ describe("mapping no nested objects", () => {
 describe("mapping nested objects", () => {
     let transformation = [
         {
-            from: "key",
-            to: "object.anotherKey",
+            from: "$.key",
+            to: "$.object.anotherKey",
         },
     ];
 
@@ -163,16 +163,16 @@ describe("mapping nested objects", () => {
     it("should wrap multiple properties in the target", () => {
         let transformation = [
             {
-                from: "object.propOne",
-                to: "objectWrapper.newObject.newPropOne",
+                from: "$.object.propOne",
+                to: "$.objectWrapper.newObject.newPropOne",
             },
             {
-                from: "object.propTwo",
-                to: "objectWrapper.newObject.newPropTwo",
+                from: "$.object.propTwo",
+                to: "$.objectWrapper.newObject.newPropTwo",
             },
             {
-                from: "object.propThree",
-                to: "objectWrapper.newObject.newPropThree",
+                from: "$.object.propThree",
+                to: "$.objectWrapper.newObject.newPropThree",
             },
         ];
 
@@ -239,8 +239,8 @@ describe("mapping array values in the source object", () => {
     it("should create one object output, no extra property", () => {
         let transformation = [
             {
-                from: "items[0].item",
-                to: "item",
+                from: "$.items[0].item",
+                to: "$.item",
             },
         ];
 
@@ -256,12 +256,12 @@ describe("mapping array values in the source object", () => {
     it("should create one object output, and an extra non array value", () => {
         let transformation = [
             {
-                from: "items[0].item",
-                to: "item",
+                from: "$.items[0].item",
+                to: "$.item",
             },
             {
-                from: "date",
-                to: "date",
+                from: "$.date",
+                to: "$.date",
             },
         ];
 
@@ -278,8 +278,8 @@ describe("mapping array values in the source object", () => {
     it("should create three objects one of each item", () => {
         let transformation = [
             {
-                from: "items[*].item",
-                to: "item",
+                from: "$.items[*].item",
+                to: "$.item",
             },
         ];
 
@@ -302,12 +302,12 @@ describe("mapping array values in the source object", () => {
     it("should create two objects and an additional non array field", () => {
         let transformation = [
             {
-                from: "items[*].item",
-                to: "item",
+                from: "$.items[*].item",
+                to: "$.item",
             },
             {
-                from: "date",
-                to: "date",
+                from: "$.date",
+                to: "$.date",
             },
         ];
 
@@ -333,8 +333,8 @@ describe("mapping array values in the source object", () => {
     it("should create one object for every country value, nested array", () => {
         let transformation = [
             {
-                from: "items[*].availableCountries[*].country",
-                to: "constraints.availableCountry",
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.constraints.availableCountry",
             },
         ];
 
@@ -373,12 +373,12 @@ describe("mapping array values in the source object", () => {
     it("should create one object for every country value and an item value header for each of the five", () => {
         let transformation = [
             {
-                from: "items[*].item",
-                to: "item",
+                from: "$.items[*].item",
+                to: "$.item",
             },
             {
-                from: "items[*].availableCountries[*].country",
-                to: "constraints.availableCountry",
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.constraints.availableCountry",
             },
         ];
 
@@ -422,16 +422,16 @@ describe("mapping array values in the source object", () => {
     it("should create one object for every array value and the non repeating value should be present all of them", () => {
         let transformation = [
             {
-                from: "date",
-                to: "date",
+                from: "$.date",
+                to: "$.date",
             },
             {
-                from: "items[*].item",
-                to: "item",
+                from: "$.items[*].item",
+                to: "$.item",
             },
             {
-                from: "items[*].availableCountries[*].country",
-                to: "constraints.availableCountry",
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.constraints.availableCountry",
             },
         ];
 
@@ -523,16 +523,16 @@ describe("mapping array values in the target object", () => {
     it("should aggregate all countries for item", () => {
         let transformation = [
             {
-                from: "date",
-                to: "date",
+                from: "$.date",
+                to: "$.date",
             },
             {
-                from: "items[*].item",
-                to: "item",
+                from: "$.items[*].item",
+                to: "$.item",
             },
             {
-                from: "items[*].availableCountries[*].country",
-                to: "availableCountries[]",
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.availableCountries[]",
             },
         ];
 
@@ -560,20 +560,20 @@ describe("mapping array values in the target object", () => {
     it("should add properties to objects in the target array", () => {
         let transformation = [
             {
-                from: "date",
-                to: "date",
+                from: "$.date",
+                to: "$.date",
             },
             {
-                from: "items[*].item",
-                to: "item",
+                from: "$.items[*].item",
+                to: "$.item",
             },
             {
-                from: "items[*].availableCountries[*].country",
-                to: "availableCountries[].code",
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.availableCountries[].code",
             },
             {
-                from: "items[*].availableCountries[*].countryName",
-                to: "availableCountries[].name",
+                from: "$.items[*].availableCountries[*].countryName",
+                to: "$.availableCountries[].name",
             },
         ];
 
@@ -658,8 +658,8 @@ describe("mapping with filters in the source", () => {
     it("should filter only the reference category book", () => {
         let transformation = [
             {
-                from: 'store.book[?(@.category=="reference")]',
-                to: "categories",
+                from: '$.store.book[?(@.category=="reference")]',
+                to: "$.categories",
             },
         ];
 
@@ -679,16 +679,16 @@ describe("mapping with filters in the source", () => {
     it("should filter only the fiction category books", () => {
         let transformation = [
             {
-                from: "storeNumber",
-                to: "store",
+                from: "$.storeNumber",
+                to: "$.store",
             },
             {
-                from: 'store.book[?(@.category=="fiction")].author',
-                to: "book.author",
+                from: '$.store.book[?(@.category=="fiction")].author',
+                to: "$.book.author",
             },
             {
-                from: 'store.book[?(@.category=="fiction")].title',
-                to: "book.title",
+                from: '$.store.book[?(@.category=="fiction")].title',
+                to: "$.book.title",
             },
         ];
 
@@ -760,13 +760,13 @@ describe("mapping with functions", () => {
     it("should apply uppercase to the authors and trim the title names", () => {
         let transformation = [
             {
-                from: 'store.book[?(@.category=="reference")].author',
-                to: "book.author",
+                from: '$.store.book[?(@.category=="reference")].author',
+                to: "$.book.author",
                 fn: (author) => author.toUpperCase(),
             },
             {
-                from: 'store.book[?(@.category=="reference")].title',
-                to: "book.title",
+                from: '$.store.book[?(@.category=="reference")].title',
+                to: "$.book.title",
                 fn: (title) => title.trim(),
             },
         ];

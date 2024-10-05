@@ -28,18 +28,18 @@ let source = {
 
 let transformation = [
     {
-        from: "store.book[*].category",
-        to: "category",
+        from: "$.store.book[*].category",
+        to: "$.category",
         fn: (category) => category.toUpperCase(),
     },
     {
-        from: "store.book[*].title",
-        to: "book.title",
+        from: "$.store.book[*].title",
+        to: "$.book.title",
         fn: (title) => title.trim(),
     },
     {
-        from: "store.book[*].price",
-        to: "book.price",
+        from: "$.store.book[*].price",
+        to: "$.book.price",
     },
 ];
 
@@ -98,17 +98,17 @@ let source = {
 
 let transformation = [
     {
-        from: 'store.book[?(@.category=="fiction")].category',
-        to: "category",
+        from: '$.store.book[?(@.category=="fiction")].category',
+        to: "$.category",
     },
     {
-        from: 'store.book[?(@.category=="fiction")].title',
-        to: "books[].bookName",
+        from: '$.store.book[?(@.category=="fiction")].title',
+        to: "$.books[].bookName",
         fn: (title) => title.trim(),
     },
     {
-        from: 'store.book[?(@.category=="fiction")].author',
-        to: "books[].author",
+        from: '$.store.book[?(@.category=="fiction")].author',
+        to: "$.books[].author",
         fn: (author) => author.toUpperCase(),
     },
 ];
