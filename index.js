@@ -80,7 +80,10 @@ export function mapObj(source, mappings) {
             if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
             let nodes = jp.nodes(source, mapping.from);
             if (nodes.length === 0) continue;
-            if (nodes.length === 1 && !nodes[0].path.find(isNumber)) {
+            if (
+                nodes.length === 1 &&
+                nodes[0].path.find(isNumber) === undefined
+            ) {
                 let value = nodes[0].value;
                 if (mapping.fn) value = mapping.fn.call(source, value);
                 commonProps = addProp(commonProps, to, value);
