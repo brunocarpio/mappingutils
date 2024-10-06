@@ -1,7 +1,7 @@
 //@ts-check
 
 import assert from "node:assert/strict";
-import { mapObj } from "../dist/index.js";
+import { mapObj } from "../index.js";
 import { describe, it } from "node:test";
 
 describe("mapping no nested objects", () => {
@@ -236,6 +236,75 @@ describe("mapping array values in the source object", () => {
         ],
     };
 
+    it("should return an empty array when the source object is empty", () => {
+        let emptySource = {};
+        let transformation = [
+            {
+                from: "$.items[0].item",
+                to: "$.item",
+            },
+        ];
+        let arr = mapObj(emptySource, transformation);
+        assert.equal(arr.length, 0);
+    });
+
+    it("should return an empty array when the transformation property does not exist", () => {
+        let missingPropertySource = {
+            date: "20240921",
+        };
+
+        let transformation = [
+            {
+                from: "$.items[*].nonExistentProperty",
+                to: "$.missingProperty",
+            },
+        ];
+
+        let arr = mapObj(missingPropertySource, transformation);
+        assert.equal(arr.length, 0);
+    });
+
+    it("should return an empty array when nested arrays are empty", () => {
+        let emptyNestedArraySource = {
+            date: "20240921",
+            items: [
+                {
+                    item: 11111,
+                    availableCountries: [],
+                },
+                {
+                    item: 22222,
+                    availableCountries: [],
+                },
+            ],
+        };
+
+        let transformation = [
+            {
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.constraints.availableCountry",
+            },
+        ];
+
+        let arr = mapObj(emptyNestedArraySource, transformation);
+        assert.equal(arr.length, 0);
+    });
+
+    it("should return an empty array when the items array is empty", () => {
+        let emptyItemsSource = {
+            date: "20240921",
+            items: [],
+        };
+        let transformation = [
+            {
+                from: "$.items[*].item",
+                to: "$.item",
+            },
+        ];
+        let arr = mapObj(emptyItemsSource, transformation);
+        assert.equal(arr.length, 0);
+    });
+
     it("should create one object output, no extra property", () => {
         let transformation = [
             {
@@ -296,6 +365,44 @@ describe("mapping array values in the source object", () => {
         ];
 
         let arr = mapObj(source, transformation);
+        assert.deepEqual(arr, target);
+    });
+
+    it("should skip transformations when a property is missing in some items", () => {
+        let incompleteSource = {
+            date: "20240921",
+            items: [
+                {
+                    item: 11111,
+                    availableCountries: [{ country: "US" }],
+                },
+                {
+                    item: 22222,
+                },
+                {
+                    item: 33333,
+                    availableCountries: [{ country: "BR" }],
+                },
+            ],
+        };
+
+        let transformation = [
+            {
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.constraints.availableCountry",
+            },
+        ];
+
+        let target = [
+            {
+                constraints: { availableCountry: "US" },
+            },
+            {
+                constraints: { availableCountry: "BR" },
+            },
+        ];
+
+        let arr = mapObj(incompleteSource, transformation);
         assert.deepEqual(arr, target);
     });
 
@@ -520,6 +627,23 @@ describe("mapping array values in the target object", () => {
         ],
     };
 
+    it("should return an empty array when items array is empty", () => {
+        let emptyItemsSource = {
+            date: "20240921",
+            items: [],
+        };
+
+        let transformation = [
+            {
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.availableCountries[]",
+            },
+        ];
+
+        let arr = mapObj(emptyItemsSource, transformation);
+        assert.equal(arr.length, 0);
+    });
+
     it("should aggregate all countries for item", () => {
         let transformation = [
             {
@@ -613,6 +737,123 @@ describe("mapping array values in the target object", () => {
             },
         ];
         let arr = mapObj(source, transformation);
+        assert.deepEqual(arr, target);
+    });
+
+    it("should handle items with empty availableCountries arrays", () => {
+        let sourceWithEmptyCountries = {
+            date: "20240921",
+            items: [
+                {
+                    item: 11111,
+                    availableCountries: [],
+                },
+                {
+                    item: 22222,
+                    availableCountries: [
+                        {
+                            country: "UY",
+                            countryName: "Uruguay",
+                        },
+                    ],
+                },
+                {
+                    item: 33333,
+                    availableCountries: [],
+                },
+            ],
+        };
+
+        let transformation = [
+            {
+                from: "$.date",
+                to: "$.date",
+            },
+            {
+                from: "$.items[*].item",
+                to: "$.item",
+            },
+            {
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.availableCountries[]",
+            },
+        ];
+
+        let target = [
+            {
+                date: "20240921",
+                item: 11111,
+                availableCountries: [],
+            },
+            {
+                date: "20240921",
+                item: 22222,
+                availableCountries: ["UY"],
+            },
+            {
+                date: "20240921",
+                item: 33333,
+                availableCountries: [],
+            },
+        ];
+
+        let arr = mapObj(sourceWithEmptyCountries, transformation);
+        assert.deepEqual(arr, target);
+    });
+
+    it("should handle missing properties in availableCountries", () => {
+        let sourceWithMissingProps = {
+            date: "20240921",
+            items: [
+                {
+                    item: 11111,
+                    availableCountries: [
+                        {
+                            country: "US",
+                        },
+                        {
+                            countryName: "Peru",
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let transformation = [
+            {
+                from: "$.date",
+                to: "$.date",
+            },
+            {
+                from: "$.items[*].item",
+                to: "$.item",
+            },
+            {
+                from: "$.items[*].availableCountries[*].country",
+                to: "$.availableCountries[].code",
+            },
+            {
+                from: "$.items[*].availableCountries[*].countryName",
+                to: "$.availableCountries[].name",
+            },
+        ];
+
+        let target = [
+            {
+                date: "20240921",
+                item: 11111,
+                availableCountries: [
+                    {
+                        code: "US",
+                    },
+                    {
+                        name: "Peru",
+                    },
+                ],
+            },
+        ];
+
+        let arr = mapObj(sourceWithMissingProps, transformation);
         assert.deepEqual(arr, target);
     });
 });

@@ -2,6 +2,7 @@ import "core-js/modules/esnext.map.group-by.js";
 //@ts-check
 
 import jp from "jsonpath";
+let isNumber = el => typeof el === "number";
 
 /**
  * Add a `key` property to the object `obj` with the value `value`.
@@ -69,49 +70,35 @@ export function mapObjArr(source, mappings) {
  * @returns {object[]} - An array of objects resulting from transforming the input object.
  */
 export function mapObj(source, mappings) {
-  let outputObjects = new Map();
-  outputObjects.set(0, [{}]);
-  let arrToMerge = new Set();
+  let commonProps = {};
+  let indexToObjArray = new Map();
+  let propsToMerge = new Set();
   for (let mapping of mappings) {
     if (mapping.from) {
       let to = mapping.to;
       if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
       let nodes = jp.nodes(source, mapping.from);
       if (nodes.length === 0) continue;
-      if (nodes.length === 1) {
+      if (nodes.length === 1 && !nodes[0].path.find(isNumber)) {
         let value = nodes[0].value;
         if (mapping.fn) value = mapping.fn.call(source, value);
-        for (let v of outputObjects.values()) {
-          for (let i = 0; i < v.length; i++) {
-            v[i] = addProp(v[i], to, value);
-          }
+        commonProps = addProp(commonProps, to, value);
+        continue;
+      }
+      let indexToNodes = Map.groupBy(nodes, node => node.path.find(isNumber));
+      for (let [k, v] of indexToNodes) {
+        let arr = [],
+          obj = {};
+        if (indexToObjArray.get(k)?.length > 0) {
+          arr = indexToObjArray.get(k);
+          obj = arr[0];
         }
-      } else {
-        let groupNumbers = [];
-        let nodesGroup = Map.groupBy(nodes, node => {
-          for (let el of node.path) {
-            if (typeof el === "number") {
-              if (groupNumbers.indexOf(el) === -1) groupNumbers.push(el);
-              return groupNumbers.indexOf(el);
-            }
-          }
-        });
-        for (let [k, v] of nodesGroup) {
-          let arr, obj;
-          if (outputObjects.get(k)?.length > 0) {
-            arr = outputObjects.get(k);
-            obj = arr[0];
-          } else {
-            arr = [];
-            obj = structuredClone(outputObjects.get(0)[0]);
-          }
-          for (let i = 0; i < Math.max(v.length, arr.length); i++) {
-            let value = v[Math.min(i, v.length - 1)].value;
-            if (mapping.fn) value = mapping.fn.call(source, value);
-            if (i >= arr.length) arr.push(addProp(obj, to, value));else if (i >= v.length) arr[i] = addProp(obj, to, value);else arr[i] = addProp(arr[i], to, value);
-          }
-          outputObjects.set(k, arr);
+        for (let i = 0; i < Math.max(v.length, arr.length); i++) {
+          let value = v[Math.min(i, v.length - 1)].value;
+          if (mapping.fn) value = mapping.fn.call(source, value);
+          if (i >= arr.length) arr.push(addProp(obj, to, value));else if (i >= v.length) arr[i] = addProp(obj, to, value);else arr[i] = addProp(arr[i], to, value);
         }
+        indexToObjArray.set(k, arr);
       }
     }
     if (mapping.to.includes("[]")) {
@@ -120,21 +107,19 @@ export function mapObj(source, mappings) {
       if (to.slice(-3) !== "[*]") {
         to = to.substring(0, to.lastIndexOf("[*]") + 3);
       }
-      arrToMerge.add(to);
+      propsToMerge.add(to);
     }
   }
-  for (let [k, v] of outputObjects) {
-    let filtered = v.filter(obj => Object.keys(obj).length > 0);
-    if (filtered.length === 0) {
-      outputObjects.delete(k);
-      continue;
-    }
-    outputObjects.set(k, filtered);
-  }
-  for (let to of arrToMerge.values()) {
-    for (let k of outputObjects.keys()) {
-      outputObjects.set(k, [mergeObjArr(outputObjects.get(k), to)]);
+  if (indexToObjArray.size === 0) return Object.keys(commonProps).length > 0 ? [commonProps] : [];
+  for (let v of indexToObjArray.values()) {
+    for (let i = 0; i < v.length; i++) {
+      Object.assign(v[i], commonProps);
     }
   }
-  return Array.from(outputObjects.values()).flat();
+  for (let to of propsToMerge.values()) {
+    for (let k of indexToObjArray.keys()) {
+      indexToObjArray.set(k, [mergeObjArr(indexToObjArray.get(k), to)]);
+    }
+  }
+  return Array.from(indexToObjArray.values()).flat();
 }
