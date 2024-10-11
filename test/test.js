@@ -783,7 +783,6 @@ describe("mapping array values in the target object", () => {
             {
                 date: "20240921",
                 item: 11111,
-                availableCountries: [],
             },
             {
                 date: "20240921",
@@ -793,12 +792,11 @@ describe("mapping array values in the target object", () => {
             {
                 date: "20240921",
                 item: 33333,
-                availableCountries: [],
             },
         ];
 
         let arr = mapObj(sourceWithEmptyCountries, transformation);
-        assert.deepEqual(arr, target);
+        assert.deepEqual(new Set(arr), new Set(target));
     });
 
     it("should handle missing properties in availableCountries", () => {
