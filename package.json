@@ -1,7 +1,7 @@
 {
     "name": "mappingutils",
     "description": "Transform input objects with ease.",
-    "version": "0.3.7",
+    "version": "0.3.8",
     "author": "bcarpio181@gmail.com",
     "type": "module",
     "main": "dist/index.js",
