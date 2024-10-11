@@ -1,8 +1,56 @@
-import "core-js/modules/esnext.map.group-by.js";
+import "core-js/modules/esnext.string.replace-all.js";
 //@ts-check
 
 import jp from "jsonpath";
 let isNumber = el => typeof el === "number";
+
+/**
+ * Converts a string to a node path
+ * Ex: '$,items,0,availableCountries,0,country' =>
+ * ['$', 'items', 0, 'availableCountries', 0, 'country']
+ * @param {string} str - A path string
+ * @returns {(string|number)[]} - The converted string to node path
+ */
+function strToPath(str) {
+  return str.split(",").map(v => {
+    if (!Number.isNaN(+v)) {
+      return +v;
+    }
+    return v;
+  });
+}
+
+/**
+ * Finds the upper level array type node path
+ * Ex: findParent(['$', 'items', 0, 'availableCountries', 0, 'country'], 2)
+ * returns ['$', 'items', 0]
+ * @param {(string|number)[]} path - A node path
+ * @param {number} level - The level up to find for the parent node
+ * @returns {(string|number)[]|null} - Upper level node path
+ */
+function findParentPath(path, level) {
+  let occurrence = 0;
+  for (let i = path.length - 1; i > 0; i--) {
+    if (typeof path[i] === "number") occurrence++;
+    if (occurrence === level) return path.slice(0, i + 1);
+  }
+  return null;
+}
+
+/**
+ * Checks if path contains another node path
+ * Ex: includesPath(['$', 'items', 0, 'availableCountries', 0, 'country'], ['$', 'items', 0])
+ * returns true
+ * @param {(string|number)[]} path - A node path
+ * @param {(string|number)[]} otherPath - Another node path
+ * @returns {boolean} - True if node path includes node otherPath
+ */
+function includesPath(path, otherPath) {
+  for (let i = 0; i < otherPath.length; i++) {
+    if (path[i] !== otherPath[i]) return false;
+  }
+  return true;
+}
 
 /**
  * Add a `key` property to the object `obj` with the value `value`.
@@ -71,55 +119,70 @@ export function mapObjArr(source, mappings) {
  */
 export function mapObj(source, mappings) {
   let commonProps = {};
-  let indexToObjArray = new Map();
+  let indexToObj = new Map();
   let propsToMerge = new Set();
+  let arrNodes = [];
   for (let mapping of mappings) {
-    if (mapping.from) {
-      let to = mapping.to;
-      if (to.includes("[]")) to = to.replaceAll("[]", "[*]");
-      let nodes = jp.nodes(source, mapping.from);
-      if (nodes.length === 0) continue;
-      if (nodes.length === 1 && nodes[0].path.find(isNumber) === undefined) {
-        let value = nodes[0].value;
-        if (mapping.fn) value = mapping.fn.call(source, value);
-        commonProps = addProp(commonProps, to, value);
-        continue;
-      }
-      let indexToNodes = Map.groupBy(nodes, node => node.path.find(isNumber));
-      for (let [k, v] of indexToNodes) {
-        let arr = [],
-          obj = {};
-        if (indexToObjArray.get(k)?.length > 0) {
-          arr = indexToObjArray.get(k);
-          obj = arr[0];
-        }
-        for (let i = 0; i < Math.max(v.length, arr.length); i++) {
-          let value = v[Math.min(i, v.length - 1)].value;
-          if (mapping.fn) value = mapping.fn.call(source, value);
-          if (i >= arr.length) arr.push(addProp(obj, to, value));else if (i >= v.length) arr[i] = addProp(obj, to, value);else arr[i] = addProp(arr[i], to, value);
-        }
-        indexToObjArray.set(k, arr);
-      }
-    }
-    if (mapping.to.includes("[]")) {
-      let to = mapping.to;
+    if (!mapping.from) continue;
+    let to = mapping.to;
+    if (to.includes("[]")) {
       to = to.replaceAll("[]", "[*]");
       if (to.slice(-3) !== "[*]") {
-        to = to.substring(0, to.lastIndexOf("[*]") + 3);
+        propsToMerge.add(to.substring(0, to.lastIndexOf("[*]") + 3));
+      } else propsToMerge.add(to);
+    }
+    let nodes = jp.nodes(source, mapping.from);
+    if (nodes.length === 0) continue;
+    if (nodes.length === 1 && nodes[0].path.find(isNumber) === undefined) {
+      let value = nodes[0].value;
+      if (mapping.fn) value = mapping.fn.call(source, value);
+      commonProps = addProp(commonProps, to, value);
+      continue;
+    }
+    nodes.forEach(node => {
+      node.to = to;
+      if (mapping.fn) node.value = mapping.fn(node.value);
+    });
+    arrNodes = arrNodes.concat(nodes);
+  }
+  arrNodes.sort((a, b) => b.path.length - a.path.length);
+  for (let node of arrNodes) {
+    var _findParentPath;
+    if (node.ignore) continue;
+    let key = (_findParentPath = findParentPath(node.path, 1)) === null || _findParentPath === void 0 ? void 0 : _findParentPath.toString();
+    let obj = indexToObj.get(key) ?? {};
+    obj = addProp(obj, node.to, node.value);
+    let parentPath = findParentPath(node.path, 2);
+    if (parentPath) {
+      let parentNodes = arrNodes.filter(otherNode => includesPath(otherNode.path, parentPath) && otherNode.path.length < node.path.length);
+      if (parentNodes && parentNodes.length > 0) {
+        for (let pNode of parentNodes) {
+          pNode.ignore = true;
+          obj = addProp(obj, jp.stringify(pNode.to), pNode.value);
+        }
       }
-      propsToMerge.add(to);
     }
+    indexToObj.set(key, obj);
   }
-  if (indexToObjArray.size === 0) return Object.keys(commonProps).length > 0 ? [commonProps] : [];
-  for (let v of indexToObjArray.values()) {
-    for (let i = 0; i < v.length; i++) {
-      Object.assign(v[i], commonProps);
+  if (indexToObj.size === 0) return Object.keys(commonProps).length > 0 ? [commonProps] : [];
+  indexToObj.values().forEach(v => Object.assign(v, commonProps));
+  if (propsToMerge.size > 0) {
+    let indexParentToObjArr = new Map();
+    for (let to of propsToMerge.values()) {
+      for (let [k, v] of indexToObj.entries()) {
+        let indexParent = strToPath(k);
+        let parentPath = findParentPath(indexParent, 2);
+        if (parentPath) {
+          let arr = indexParentToObjArr.get(parentPath.toString()) ?? [];
+          arr.push(v);
+          indexParentToObjArr.set(parentPath.toString(), [mergeObjArr(arr, to)]);
+        } else {
+          indexParentToObjArr.set(indexParent, [v]);
+        }
+      }
     }
+    return Array.from(indexParentToObjArr.values()).flat();
+  } else {
+    return Array.from(indexToObj.values()).flat();
   }
-  for (let to of propsToMerge.values()) {
-    for (let k of indexToObjArray.keys()) {
-      indexToObjArray.set(k, [mergeObjArr(indexToObjArray.get(k), to)]);
-    }
-  }
-  return Array.from(indexToObjArray.values()).flat();
 }
