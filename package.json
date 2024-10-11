@@ -1,42 +1,45 @@
 {
-  "name": "mappingutils",
-  "description": "Transform input objects with ease.",
-  "version": "0.3.7",
-  "author": "bcarpio181@gmail.com",
-  "type": "module",
-  "main": "dist/index.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "build": "babel index.js --out-file dist/index.js",
-    "test": "node --test",
-    "debug": "npm test -- --inspect-brk"
-  },
-  "prettier": {
-    "tabWidth": 4
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.25.6",
-    "@babel/core": "^7.25.2",
-    "@babel/plugin-transform-runtime": "^7.25.4",
-    "@babel/preset-env": "^7.25.4",
-    "@babel/runtime-corejs3": "^7.25.6",
-    "prettier": "3.3.3"
-  },
-  "dependencies": {
-    "core-js": "^3.38.1",
-    "jsonpath": "1.1.1"
-  },
-  "keywords": [
-    "mappingUtils",
-    "mapping-utils",
-    "mapping",
-    "transformation"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/brunocarpio/mappingUtils.git"
-  },
-  "license": "MIT"
+    "name": "mappingutils",
+    "description": "Transform input objects with ease.",
+    "version": "0.3.7",
+    "author": "bcarpio181@gmail.com",
+    "type": "module",
+    "main": "dist/index.js",
+    "files": [
+        "dist"
+    ],
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "build": "babel index.js --out-file dist/index.js",
+        "test": "node --test",
+        "debug": "npm test -- --inspect-brk"
+    },
+    "prettier": {
+        "tabWidth": 4
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.25.6",
+        "@babel/core": "^7.25.2",
+        "@babel/plugin-transform-runtime": "^7.25.4",
+        "@babel/preset-env": "^7.25.4",
+        "@babel/runtime-corejs3": "^7.25.6",
+        "prettier": "3.3.3"
+    },
+    "dependencies": {
+        "core-js": "^3.38.1",
+        "jsonpath": "1.1.1"
+    },
+    "keywords": [
+        "mappingUtils",
+        "mapping-utils",
+        "mapping",
+        "transformation"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/brunocarpio/mappingUtils.git"
+    },
+    "license": "MIT"
 }
