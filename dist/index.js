@@ -1,4 +1,3 @@
-import "core-js/modules/esnext.string.replace-all.js";
 //@ts-check
 
 import jp from "jsonpath";
@@ -139,17 +138,16 @@ export function mapObj(source, mappings) {
       commonProps = addProp(commonProps, to, value);
       continue;
     }
-    nodes.forEach(node => {
+    for (let node of nodes) {
       node.to = to;
       if (mapping.fn) node.value = mapping.fn(node.value);
-    });
+    }
     arrNodes = arrNodes.concat(nodes);
   }
   arrNodes.sort((a, b) => b.path.length - a.path.length);
   for (let node of arrNodes) {
-    var _findParentPath;
     if (node.ignore) continue;
-    let key = (_findParentPath = findParentPath(node.path, 1)) === null || _findParentPath === void 0 ? void 0 : _findParentPath.toString();
+    let key = findParentPath(node.path, 1)?.toString();
     let obj = indexToObj.get(key) ?? {};
     obj = addProp(obj, node.to, node.value);
     let parentPath = findParentPath(node.path, 2);

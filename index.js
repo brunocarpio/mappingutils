@@ -140,10 +140,10 @@ export function mapObj(source, mappings) {
             commonProps = addProp(commonProps, to, value);
             continue;
         }
-        nodes.forEach((node) => {
+        for (let node of nodes) {
             node.to = to;
             if (mapping.fn) node.value = mapping.fn(node.value);
-        });
+        }
         arrNodes = arrNodes.concat(nodes);
     }
     arrNodes.sort((a, b) => b.path.length - a.path.length);
