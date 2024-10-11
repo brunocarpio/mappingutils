@@ -170,7 +170,9 @@ export function mapObj(source, mappings) {
     }
     if (indexToObj.size === 0)
         return Object.keys(commonProps).length > 0 ? [commonProps] : [];
-    indexToObj.values().forEach((v) => Object.assign(v, commonProps));
+    for (let obj of indexToObj.values()) {
+        Object.assign(obj, commonProps);
+    }
     if (propsToMerge.size > 0) {
         let indexParentToObjArr = new Map();
         for (let to of propsToMerge.values()) {
