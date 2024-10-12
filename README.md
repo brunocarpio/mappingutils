@@ -2,9 +2,8 @@
 Transform input objects with ease.
 
 ## Table of Contents
-- [mappingutils](#mappingutils)
-- [Installation](#installation)
 - [Prerequisites](#prerequisites)
+- [Installation](#installation)
 - [Usage Guide](#usage-guide)
 - [Basic Usage](#basic-usage)
 - [Use Cases](#use-cases)
@@ -19,33 +18,80 @@ Transform input objects with ease.
 - [Contributing](#contributing)
 - [License](#license)
 
-## Installation
-You can install mappingutils directly from npm:
-- npm install mappingutils
-Ensure that you are using Node.js version 18 or higher. You can check your Node version with the following command:
-- node -v
-
 ## Prerequisites
 - Node.js v18 or higher: Ensure that your environment has Node.js installed. You can download it from [Node.js official website](https://nodejs.org/).
 - npm (Node Package Manager): npm comes bundled with Node.js, so make sure it's available.
 
+## Installation
+You can install mappingutils directly from npm:
+- `npm install mappingutils`
+
+Ensure that you are using Node.js version 18 or higher. You can check your Node version with the following command:
+- `node -v`
+
 ## Usage Guide
-1) Ensure you are using Node version 18 or higher.
+### Using as a Library 
+1) Ensure you are using Node version 18 or higher. You can check your Node version with the following command:
+    - `node -v`
+
+2) Install the library using npm:
+    - `npm install mappingutils`
+
+3) Create a new file (e.g., test.js) in your project directory and add your mapping code. For example:
+```javascript
+import { mapObj } from "../index.js";
+
+const source = {
+    store: {
+        book: [
+            {
+                category: "fiction",
+                title: "The Hobbit",
+            }
+        ]
+    }
+};
+
+const transformation = [
+    {
+        from: "$.store.book[*].category",
+        to: "$.category",
+    },
+    {
+        from: "$.store.book[*].title",
+        to: "$.book.title",
+    }
+];
+
+const output = mapObj(source, transformation);
+console.log(output);
+```
+4) Run your file using Node.js:
+    * `node test.js`
+    
+Ensure that the terminal is pointed to the directory containing the test.js file, or specify the path directly.
+
+### Downloading and Contributing to the Repository
+1) Ensure you are using Node version 18 or higher. You can check your Node version with the following command:
+    - `node -v`
 
 2) Navigate to the directory where you want to clone the repository. Open a terminal (or Git Bash) and run the following command to clone the repository:
-- git clone [repository_url](https://github.com/brunocarpio/mappingUtils.git)
+    - `git clone [repository_url](https://github.com/brunocarpio/mappingUtils.git)`
+
 Alternatively, you can download the repository as a .zip file and extract it to the desired location.
 
 3) Open the repository in your preferred text editor, such as VSCode.
 
 4) Install the necessary dependencies by running:
-- npm install
+    - `npm install`
+
 This will install all the required packages defined in package.json.
 
 5) Create a new file (e.g., test.js) inside the project or use the existing one. Add your mapping code as shown in the examples below.
 
 6) To run your test.js file, use the following command in the terminal:
-- node test.js
+    - `node test.js`
+    
 Ensure that the terminal is pointed to the directory containing the test.js file, or specify the path directly.
 
 ## Basic Usage
@@ -54,7 +100,7 @@ It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) synta
 After installing the library, you can import the functions and start using them in your JavaScript or TypeScript projects:
 
 ```javascript
-    const { mapObj, mergeObjArr } = require('mappingutils');
+    import { mapObj } from "../index.js";
 
     // Your source object
     const source = {
@@ -155,47 +201,85 @@ Transforms an input object `source` given the provided array of mappings `mappin
 
 - Example: 
 ```javascript
-import { mapObj } from "mappingutils";
+import { mapObj } from "../index.js";
+import { describe, it } from "node:test";
 
-let source = {
-    person: {
-        firstName: "John",
-        lastName: "Doe",
-        age: 25,
-    },
-};
+describe("mapping objects from books store", () => {
+    let transformation = [
+        {
+            from: "$.person.firstName",
+            to: "$.name.first",
+        },
+        {
+            from: "$.person.lastName",
+            to: "$.name.last",
+        },
+        {
+            from: "$.person.age",
+            to: "$.ageCategory",
+            fn: (age) => (age >= 18 ? "Adult" : "Minor"),  // Uso de fn para categorizar edad
+        },
+        {
+            from: "$.person.items[*].item",   // Transformación de array
+            to: "$.items[*].code",
+        }
+    ];
 
-let transformation = [
-    {
-        from: "$.person.firstName",
-        to: "$.name.first",
-    },
-    {
-        from: "$.person.lastName",
-        to: "$.name.last",
-    },
-    {
-        from: "$.person.age",
-        to: "$.age",
-    },
-];
+    it("should map book category and title to new structure", () => {
+        let source = {
+            person: {
+                firstName: "John",
+                lastName: "Doe",
+                age: 25,
+                items: [
+                    { item: 11111 },
+                    { item: 22222 },
+                    { item: 33333 },
+                ],
+            },
+        };
 
-let outputArr = mapObj(source, transformation);
-console.log(JSON.stringify(outputArr, null, 2));
+        let target = {
+            name: {
+                first: "John",
+                last: "Doe",
+            },
+            ageCategory: "Adult",
+            items: [
+                { code: 11111 },
+                { code: 22222 },
+                { code: 33333 },
+            ],
+        };
 
-response:
-{
-  "name": {
-    "first": "John",
-    "last": "Doe"
-  },
-  "age": 25
-}
+        let output = mapObj(source, transformation);
+
+        // Mostrar el resultado
+        console.log(JSON.stringify(output, null, 2));
+
+        response : [
+            {
+            "name": {
+                "first": "John",
+                "last": "Doe"
+            },
+            "ageCategory": "Adult",
+            "items": [
+                { "code": 11111 },
+                { "code": 22222 },
+                { "code": 33333 }
+                ]
+            }
+        ]    
+    });
+});
 ```
 
 #### mapObjArr(source, mappings)
 
-Transforms an input array of objects `source` given the provided array of mappings `mappings`. Returns an array of objects resulting from transforming the input objects.
+Transforms an input array of objects `source` using the provided array of mappings `mappings`. Returns an array of objects resulting from transforming the input objects.
+
+Each mapping can include an optional parameter `fn`, which allows for additional processing on the value being transformed. The `fn` parameter accepts a function that takes the source value and returns the modified result. This can be a simple transformation function, like converting a score to a grade, or it can even call another function from the same library for more complex transformations.
 
 - Example: 
 ```javascript
@@ -216,6 +300,17 @@ let transformation = [
         to: "$.grade",
         fn: (score) => (score >= 85 ? "A" : "B"),
     },
+];
+
+let target = [
+    {
+        fullName: "Alice",
+        grade: "A",
+    },
+    {
+        fullName: "Bob",
+        grade: "B",
+    }
 ];
 
 let outputArr = mapObjArr(source, transformation);
@@ -241,17 +336,38 @@ Make sure all tests pass before submitting a pull request.
 
 ## Changelog
 
-### [1.0.0] - 2024-10-01
-- Initial release of mappingutils. Example not real
-- Added functions: `addProp`, `mergeObjArr`, `mapObj`, `mapObjArr`. Example not real
-- Included examples for each function in the README. Example not real
+### [0.1.0] - 2024-09-30
+- Initial release of mappingutils.
+- Added functions: addProp, mergeObjArr, mapObj, mapObjArr.
+- Included examples for each function in the README.
+- License added.
 
-### [1.0.1] - 2024-10-05
-- Fixed bugs in `mapObj` handling edge cases. Example not real
-- Updated documentation for better clarity. Example not real
+### [0.2.0] - 2024-10-01
+- Improved the functions in the index.
+- Added configuration for Babel.
+- Updated the README.
 
-### [1.1.0] - 2024-10-08
-- continue here....
+### [0.3.0] - 2024-10-02
+- Fixed a bug that occurred when node groups were not consecutive.
+- Added the ability to apply a function to the value.
+- Updated JSDoc documentation.
+- Added test cases for the apply function feature.
+- Updated the README and tests.
+
+### [0.3.1] - [0.3.5] - 2024-10-06
+- Added explicit comparison to undefined.
+- Fixed handling of empty arrays in the source.
+- Removed unnecessary addition of $.
+- Adjusted value index to be the minimum between i and v.length - 1.
+- Fixed an issue where the function modified the input object.
+- Adjusted value index to be the minimum between i and v.length.
+- Updated the README.
+
+### [0.3.6] - [0.3.8] - 2024-10-11
+- Fixed handling of missing properties in array elements.
+- Used a for...of loop for iteration.
+- Reduced package size.
+- Updated the README.
 
 _Note: Future updates will follow semantic versioning._
 
