@@ -217,10 +217,10 @@ describe("mapping objects from books store", () => {
         {
             from: "$.person.age",
             to: "$.ageCategory",
-            fn: (age) => (age >= 18 ? "Adult" : "Minor"),  // Uso de fn para categorizar edad
+            fn: (age) => (age >= 18 ? "Adult" : "Minor"), 
         },
         {
-            from: "$.person.items[*].item",   // Transformación de array
+            from: "$.person.items[*].item", 
             to: "$.items[*].code",
         }
     ];
@@ -254,7 +254,6 @@ describe("mapping objects from books store", () => {
 
         let output = mapObj(source, transformation);
 
-        // Mostrar el resultado
         console.log(JSON.stringify(output, null, 2));
 
         response : [
