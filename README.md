@@ -202,76 +202,71 @@ Transforms an input object `source` given the provided array of mappings `mappin
 - Example: 
 ```javascript
 import { mapObj } from "../index.js";
-import { describe, it } from "node:test";
 
-describe("mapping objects from books store", () => {
-    let transformation = [
-        {
-            from: "$.person.firstName",
-            to: "$.name.first",
-        },
-        {
-            from: "$.person.lastName",
-            to: "$.name.last",
-        },
-        {
-            from: "$.person.age",
-            to: "$.ageCategory",
-            fn: (age) => (age >= 18 ? "Adult" : "Minor"), 
-        },
-        {
-            from: "$.person.items[*].item", 
-            to: "$.items[*].code",
-        }
-    ];
+let transformation = [
+    {
+        from: "$.person.firstName",
+        to: "$.name.first",
+    },
+    {
+        from: "$.person.lastName",
+        to: "$.name.last",
+    },
+    {
+        from: "$.person.age",
+        to: "$.ageCategory",
+        fn: (age) => (age >= 18 ? "Adult" : "Minor"), 
+    },
+    {
+        from: "$.person.items[*].item", 
+        to: "$.items[*].code",
+    }
+];
 
-    it("should map book category and title to new structure", () => {
-        let source = {
-            person: {
-                firstName: "John",
-                lastName: "Doe",
-                age: 25,
-                items: [
-                    { item: 11111 },
-                    { item: 22222 },
-                    { item: 33333 },
-                ],
-            },
-        };
+let source = {
+    person: {
+        firstName: "John",
+        lastName: "Doe",
+        age: 25,
+        items: [
+            { item: 11111 },
+            { item: 22222 },
+            { item: 33333 },
+        ],
+    },
+};
 
-        let target = {
-            name: {
-                first: "John",
-                last: "Doe",
-            },
-            ageCategory: "Adult",
-            items: [
-                { code: 11111 },
-                { code: 22222 },
-                { code: 33333 },
-            ],
-        };
+let target = {
+    name: {
+        first: "John",
+        last: "Doe",
+    },
+    ageCategory: "Adult",
+    items: [
+        { code: 11111 },
+        { code: 22222 },
+        { code: 33333 },
+    ],
+};
 
-        let output = mapObj(source, transformation);
+let output = mapObj(source, transformation);
 
-        console.log(JSON.stringify(output, null, 2));
+console.log(JSON.stringify(output, null, 2));
 
-        response : [
-            {
-            "name": {
-                "first": "John",
-                "last": "Doe"
-            },
-            "ageCategory": "Adult",
-            "items": [
-                { "code": 11111 },
-                { "code": 22222 },
-                { "code": 33333 }
-                ]
-            }
-        ]    
-    });
-});
+response : [
+    {
+    "name": {
+        "first": "John",
+        "last": "Doe"
+    },
+    "ageCategory": "Adult",
+    "items": [
+        { "code": 11111 },
+        { "code": 22222 },
+        { "code": 33333 }
+        ]
+    }
+]    
 ```
 
 #### mapObjArr(source, mappings)
