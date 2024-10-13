@@ -39,28 +39,28 @@ Ensure that you are using Node.js version 18 or higher. You can check your Node 
 
 3) Create a new file (e.g., test.js) in your project directory and add your mapping code. For example:
 ```javascript
-import { mapObj } from "../index.js";
+import { mapObj } from "mappingutils";
 
 const source = {
-    store: {
-        book: [
-            {
-                category: "fiction",
-                title: "The Hobbit",
-            }
-        ]
-    }
+  event: {
+    agency: "MI6",
+    data: {
+      name: "James Bond",
+      id: "007",
+    },
+  },
 };
 
 const transformation = [
-    {
-        from: "$.store.book[*].category",
-        to: "$.category",
-    },
-    {
-        from: "$.store.book[*].title",
-        to: "$.book.title",
-    }
+  {
+    from: "$.event.data.name",
+    to: "$.agent",
+    fn: (name) => name.toUpperCase(),
+  },
+  {
+    from: "$.event.data.id",
+    to: "$.code",
+  },
 ];
 
 const output = mapObj(source, transformation);
@@ -69,6 +69,15 @@ console.log(output);
 4) Run your file using Node.js:
     * `node test.js`
     
+It will print out
+```javascript
+[
+  {
+    agent: "JAMES BOND",
+    code: "007",
+  }
+]
+```
 Ensure that the terminal is pointed to the directory containing the test.js file, or specify the path directly.
 
 ### Downloading and Contributing to the Repository
@@ -100,35 +109,49 @@ It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) synta
 After installing the library, you can import the functions and start using them in your JavaScript or TypeScript projects:
 
 ```javascript
-    import { mapObj } from "../index.js";
+import { mapObj } from "mappingutils";
 
-    // Your source object
-    const source = {
-        store: {
-            book: [
-                {
-                    category: "fiction",
-                    title: "The Hobbit",
-                }
-            ]
-        }
-    };
+// Your source object
+const source = {
+  store: {
+    book: [
+      {
+        category: "fiction",
+        author: "J.R.R. Tolkien",
+        title: "The Hobbit",
+      },
+      {
+        category: "reference",
+        author: "Nigel Rees",
+        title: "Sayings of the Century",
+      },
+    ],
+  },
+};
 
-    // Your mapping
-    const transformation = [
-        {
-            from: "$.store.book[*].category",
-            to: "$.category",
-        },
-        {
-            from: "$.store.book[*].title",
-            to: "$.book.title",
-        }
-    ];
+// Your mapping
+const transformation = [
+  {
+    from: "$.store.book[*].category",
+    to: "$.category",
+  },
+  {
+    from: "$.store.book[*].title",
+    to: "$.book.title",
+  },
+];
 
-    // Apply the transformation
-    const output = mapObj(source, transformation);
-    console.log(output);
+// Apply the transformation
+const output = mapObj(source, transformation);
+console.log(output);
+```
+
+Prints out
+```javascript
+[
+  { category: 'fiction', book: { title: 'The Hobbit' } },
+  { category: 'reference', book: { title: 'Sayings of the Century' } }
+]
 ```
 
 ## Use Cases
@@ -149,22 +172,21 @@ Add a `key` property to the object `obj` with the value `value`. Returns a deep 
 import { addProp } from "mappingutils";
 
 let obj = {
-    name: "Alice",
-    age: 30,
+  name: "Alice",
+  age: 30,
 };
 
-let key = "address.city";
-let value = "Wonderland";
+let updatedObj = addProp(obj, "$.address.city", "Wonderland");
+console.log(updatedObj);
+```
+Prints out
 
-let updatedObj = addProp(obj, key, value);
-console.log(JSON.stringify(updatedObj, null, 2));
-
-response:
+```javascript
 {
-  "name": "Alice",
-  "age": 30,
-  "address": {
-    "city": "Wonderland"
+  name: "Alice",
+  age: 30,
+  address: {
+    city: "Wonderland"
   }
 }
 ```
@@ -178,95 +200,106 @@ Merge the `prop` array values of the object `objArr`. Returns a deep copy of the
 import { mergeObjArr } from "mappingutils";
 
 let objArr = [
-    { id: 1, items: ["apple", "banana"] },
-    { id: 2, items: ["orange"] },
-    { id: 3, items: ["grape", "pear"] },
+  { id: 1, items: ["apple", "banana"] },
+  { id: 2, items: ["orange"] },
+  { id: 3, items: ["grape", "pear"] },
 ];
 
-let prop = "items";
+let prop = "$.items[*]";
 
 let mergedObj = mergeObjArr(objArr, prop);
-console.log(JSON.stringify(mergedObj, null, 2));
+console.log(mergedObj);
+```
+Prints out
 
-response:
+```javascript
 {
-  "id": 1,
-  "items": ["apple", "banana", "orange", "grape", "pear"]
+  id: 1,
+  items: ["apple", "banana", "orange", "grape", "pear"]
 }
 ```
 
 #### mapObj(source, mappings)
 
-Transforms an input object `source` given the provided array of mappings `mappings`. Returns an array of objects resulting from transforming the input object.
+Transforms an input object `source` given the provided array of mappings `mappings` where a mapping is an object with from, to, and an optional property fn to apply to the from value.
+Returns an array of objects resulting from transforming the input object.
 
 - Example: 
 ```javascript
-import { mapObj } from "../index.js";
+import { mapObj } from "mappingutils";
 
 let transformation = [
-    {
-        from: "$.person.firstName",
-        to: "$.name.first",
-    },
-    {
-        from: "$.person.lastName",
-        to: "$.name.last",
-    },
-    {
-        from: "$.person.age",
-        to: "$.ageCategory",
-        fn: (age) => (age >= 18 ? "Adult" : "Minor"), 
-    },
-    {
-        from: "$.person.items[*].item", 
-        to: "$.items[*].code",
-    }
+  {
+    from: "$.person.firstName",
+    to: "$.name.first",
+  },
+  {
+    from: "$.person.lastName",
+    to: "$.name.last",
+  },
+  {
+    from: "$.person.age",
+    to: "$.ageCategory",
+    fn: (age) => (age >= 18 ? "Adult" : "Minor"),
+  },
+  {
+    from: "$.person.items[*].item",
+    to: "$.items[*].code",
+  },
 ];
 
 let source = {
-    person: {
-        firstName: "John",
-        lastName: "Doe",
-        age: 25,
-        items: [
-            { item: 11111 },
-            { item: 22222 },
-            { item: 33333 },
-        ],
-    },
-};
-
-let target = {
-    name: {
-        first: "John",
-        last: "Doe",
-    },
-    ageCategory: "Adult",
-    items: [
-        { code: 11111 },
-        { code: 22222 },
-        { code: 33333 },
-    ],
+  person: {
+    firstName: "John",
+    lastName: "Doe",
+    age: 25,
+    items: [{ item: 11111 }, { item: 22222 }, { item: 33333 }],
+  },
 };
 
 let output = mapObj(source, transformation);
-
 console.log(JSON.stringify(output, null, 2));
+```
+Prints out
 
-response : [
-    {
-    "name": {
-        "first": "John",
-        "last": "Doe"
-    },
-    "ageCategory": "Adult",
+```javascript
+[
+  {
     "items": [
-        { "code": 11111 },
-        { "code": 22222 },
-        { "code": 33333 }
-        ]
-    }
-]    
+      {
+        "code": 11111
+      }
+    ],
+    "name": {
+      "first": "John",
+      "last": "Doe"
+    },
+    "ageCategory": "Adult"
+  },
+  {
+    "items": [
+      {
+        "code": 22222
+      }
+    ],
+    "name": {
+      "first": "John",
+      "last": "Doe"
+    },
+    "ageCategory": "Adult"
+  },
+  {
+    "items": [
+      {
+        "code": 33333
+      }
+    ],
+    "name": {
+      "first": "John",
+      "last": "Doe"
+    },
+    "ageCategory": "Adult"
+  }
 ```
 
 #### mapObjArr(source, mappings)
@@ -280,37 +313,28 @@ Each mapping can include an optional parameter `fn`, which allows for additional
 import { mapObjArr } from "mappingutils";
 
 let source = [
-    { id: 1, name: "Alice", score: 90 },
-    { id: 2, name: "Bob", score: 80 },
+  { id: 1, name: "Alice", score: 90 },
+  { id: 2, name: "Bob", score: 80 },
 ];
 
 let transformation = [
-    {
-        from: "$.name",
-        to: "$.fullName",
-    },
-    {
-        from: "$.score",
-        to: "$.grade",
-        fn: (score) => (score >= 85 ? "A" : "B"),
-    },
-];
-
-let target = [
-    {
-        fullName: "Alice",
-        grade: "A",
-    },
-    {
-        fullName: "Bob",
-        grade: "B",
-    }
+  {
+    from: "$.name",
+    to: "$.fullName",
+  },
+  {
+    from: "$.score",
+    to: "$.grade",
+    fn: (score) => (score >= 85 ? "A" : "B"),
+  },
 ];
 
 let outputArr = mapObjArr(source, transformation);
 console.log(JSON.stringify(outputArr, null, 2));
+```
+Prints out
 
-response:
+```javascript
 [
   {
     "fullName": "Alice",
