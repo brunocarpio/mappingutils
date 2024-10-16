@@ -1,6 +1,6 @@
 # mappingutils
 Transform input objects with ease.
-![screencast](https://github.com/brunocarpio/mappingUtils/blob/addGif/screencast.gif)
+![screencast](https://github.com/brunocarpio/mappingUtils/blob/addGif/loop.gif)
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
