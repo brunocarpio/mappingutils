@@ -367,6 +367,10 @@ Make sure all tests pass before submitting a pull request.
 - Reduced package size.
 - Updated the README.
 
+### [0.3.8] - [0.4.0] - 2024-10-20
+- Add feature, mapping with array of `from` values.
+- Update the README.
+
 _Note: Future updates will follow semantic versioning._
 
 ## Issue Reporting
