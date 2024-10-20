@@ -1022,3 +1022,197 @@ describe("mapping with functions", () => {
         assert.deepEqual(arr, target);
     });
 });
+
+describe("mapping with multiple from values", () => {
+    it("should map and concatenate properties using a function", () => {
+        let source = {
+            event: {
+                data: {
+                    name: "James",
+                    lastName: "Bond",
+                },
+            },
+        };
+        let transformation = [
+            {
+                from: ["$.event.data.name", "$.event.data.lastName"],
+                to: "$.agent",
+                fn: (a, b) => `${a} ${b}`,
+            },
+        ];
+        let output = mapObj(source, transformation);
+        assert.deepStrictEqual(output, [{ agent: "James Bond" }]);
+    });
+
+    it("should handle missing properties in source", () => {
+        let source = {
+            event: {
+                data: {
+                    lastName: "Bond",
+                },
+            },
+        };
+        let transformation = [
+            {
+                from: ["$.event.data.name", "$.event.data.lastName"],
+                to: "$.agent",
+                fn: (a, b) => `${a} ${b}`,
+            },
+        ];
+        let output = mapObj(source, transformation);
+        assert.deepStrictEqual(output, [{ agent: "undefined Bond" }]);
+    });
+
+    it("should throw error when fn is missing for array from", () => {
+        let source = {
+            event: {
+                data: {
+                    name: "James",
+                    lastName: "Bond",
+                },
+            },
+        };
+        let transformation = [
+            {
+                from: ["$.event.data.name", "$.event.data.lastName"],
+                to: "$.agent",
+            },
+        ];
+        assert.throws(() => mapObj(source, transformation), {
+            name: "AssertionError",
+            message: /fn is required when "from" is an array/,
+        });
+    });
+
+    it("should handle multiple mappings in a single transformation", () => {
+        let source = {
+            event: {
+                agency: "MI6",
+                data: {
+                    name: "James",
+                    lastName: "Bond",
+                },
+            },
+        };
+        let transformation = [
+            {
+                from: "$.event.agency",
+                to: "$.agency",
+            },
+            {
+                from: ["$.event.data.name", "$.event.data.lastName"],
+                to: "$.agent",
+                fn: (a, b) => `${a} ${b}`,
+            },
+        ];
+        let output = mapObj(source, transformation);
+        assert.deepStrictEqual(output, [
+            { agency: "MI6", agent: "James Bond" },
+        ]);
+    });
+
+    it("should handle complex transformation functions with nested paths", () => {
+        let source = {
+            person: {
+                name: "John",
+                lastName: "Doe",
+                details: {
+                    birthDate: "1980-01-01",
+                    nationality: "British",
+                },
+            },
+        };
+        let transformation = [
+            {
+                from: [
+                    "$.person.name",
+                    "$.person.lastName",
+                    "$.person.details.birthDate",
+                ],
+                to: "$.summary",
+                fn: (firstName, lastName, birthDate) => {
+                    const age =
+                        new Date().getFullYear() -
+                        new Date(birthDate).getFullYear();
+                    return `${firstName} ${lastName}, Age: ${age}`;
+                },
+            },
+        ];
+        let output = mapObj(source, transformation);
+        let currentYear = new Date().getFullYear();
+        let expectedAge = currentYear - 1979;
+        assert.deepStrictEqual(output, [
+            { summary: `John Doe, Age: ${expectedAge}` },
+        ]);
+    });
+
+    it("should handle transformation functions that throw errors", () => {
+        let source = {
+            user: {
+                lastName: "Doe",
+            },
+        };
+        let transformation = [
+            {
+                from: ["$.user.name", "$.user.lastName"],
+                to: "$.fullName",
+                fn: (firstName, lastName) => {
+                    if (!firstName || !lastName) {
+                        throw new Error("Missing name components");
+                    }
+                    return `${firstName} ${lastName}`;
+                },
+            },
+        ];
+        assert.throws(() => mapObj(source, transformation), {
+            name: "Error",
+            message: /Missing name components/,
+        });
+    });
+
+    it("should handle edge case where transformation function returns undefined", () => {
+        let source = {
+            event: {
+                details: {
+                    type: "Conference",
+                    year: "2024",
+                },
+            },
+        };
+        let transformation = [
+            {
+                from: ["$.event.details.type", "$.event.details.year"],
+                to: "$.summary",
+                fn: (type, year) => {
+                    // Simulate undefined return from a function
+                    return undefined;
+                },
+            },
+        ];
+        let output = mapObj(source, transformation);
+        assert.deepStrictEqual(output, [{ summary: undefined }]);
+    });
+
+    it("should handle complex function that uses intermediate values from object", () => {
+        let source = {
+            order: {
+                item: {
+                    name: "Laptop",
+                    price: 1000,
+                },
+                discount: 0.1,
+            },
+        };
+        let transformation = [
+            {
+                from: ["$.order.item.price", "$.order.discount"],
+                to: "$.finalPrice",
+                fn: (price, discount) => {
+                    return price - price * discount;
+                },
+            },
+        ];
+        let output = mapObj(source, transformation);
+        assert.deepStrictEqual(output, [{ finalPrice: 900 }]);
+    });
+});

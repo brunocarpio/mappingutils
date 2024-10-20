@@ -6,8 +6,8 @@ import assert from "node:assert/strict";
 // Function to compute the cartesian product of input arrays, adapted from Stack Overflow
 // Source: https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
 // Author: rsp
-let cartesian = (...a) =>
-    a.reduce((a, b) => a.flatMap((ae) => b.map((be) => [ae, be])));
+let cartesian = (...arrays) =>
+    arrays.reduce((a, b) => a.flatMap((ae) => b.map((be) => [ae, be].flat())));
 
 /**
  * Converts a string to a node path
@@ -143,7 +143,7 @@ export function mapObj(source, mappings) {
             } else propsToMerge.add(to);
         }
         if (Array.isArray(mapping.from)) {
-            assert.ok(mapping.fn, "fn must be set when multiple 'from' values");
+            assert.ok(mapping.fn, 'fn is required when "from" is an array');
             let cpath = [];
             let cvalues = [];
             for (let from of mapping.from) {
@@ -157,11 +157,17 @@ export function mapObj(source, mappings) {
                 cpath.push(tpath);
                 cvalues.push(tvalues);
             }
-            let cproduct = cartesian(...cvalues);
+            cvalues = cvalues.map((arr) => {
+                if (arr.length === 0) {
+                    return [undefined];
+                } else return arr;
+            });
+            let cproductv = cartesian(...cvalues);
             let cproductp = cartesian(...cpath);
             let values = [];
-            for (let product of cproduct) {
-                values.push(mapping.fn(...product));
+            for (let product of cproductv) {
+                let val = mapping.fn(...product);
+                values.push(val);
             }
             if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
                 for (let value of values) {
