@@ -85,6 +85,9 @@ export function addProp(obj, key, value) {
 export function mergeObjArr(objArr, prop) {
     objArr = structuredClone(objArr);
     let firstObj = objArr.shift();
+    if (prop.includes("[]")) {
+        prop = prop.replaceAll("[]", "[*]");
+    }
     let arrToMerge = jp.query(firstObj, prop);
     let to = prop;
     for (let i = 0; i < objArr.length; i++) {

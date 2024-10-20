@@ -1,6 +1,6 @@
 {
     "name": "mappingutils",
-    "description": "Transform input objects with ease.",
+    "description": "Lightweight Node.js utility for object mapping and data transformation.",
     "version": "0.3.10",
     "author": "bcarpio181@gmail.com",
     "type": "module",
@@ -32,14 +32,15 @@
         "jsonpath": "1.1.1"
     },
     "keywords": [
-        "mappingUtils",
+        "mappingutils",
         "mapping-utils",
         "mapping",
-        "transformation"
+        "transformation",
+        "data transformation
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/brunocarpio/mappingUtils.git"
+        "url": "git+https://github.com/brunocarpio/mappingutils.git"
     },
     "license": "MIT"
 }

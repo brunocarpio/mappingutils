@@ -1,6 +1,8 @@
 # mappingutils
-Transform input objects with ease.
-![screencast](https://github.com/brunocarpio/mappingUtils/blob/main/loop.gif)
+
+Lightweight Node.js utility for object mapping and data transformation.
+
+![screencast](https://github.com/brunocarpio/mappingUtils/blob/main/recording.gif)
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -42,21 +44,22 @@ Ensure that you are using Node.js version 18 or higher. You can check your Node 
 ```javascript
 import { mapObj } from "mappingutils";
 
-const source = {
+let source = {
   event: {
     agency: "MI6",
     data: {
-      name: "James Bond",
+      name: "James",
+      lname: "Bond",
       id: "007",
     },
   },
 };
 
-const transformation = [
+let transformation = [
   {
-    from: "$.event.data.name",
+    from: ["$.event.data.name", "$.event.data.lname"],
     to: "$.agent",
-    fn: (name) => name.toUpperCase(),
+    fn: (name, lname) => `${name} ${lname}`.toUpperCase(),
   },
   {
     from: "$.event.data.id",
@@ -64,7 +67,7 @@ const transformation = [
   },
 ];
 
-const output = mapObj(source, transformation);
+let output = mapObj(source, transformation);
 console.log(output);
 ```
 4) Run your file using Node.js:
@@ -79,7 +82,6 @@ It will print out
   }
 ]
 ```
-Ensure that the terminal is pointed to the directory containing the test.js file, or specify the path directly.
 
 ### Downloading and Contributing to the Repository
 1) Ensure you are using Node version 18 or higher. You can check your Node version with the following command:
@@ -113,7 +115,7 @@ After installing the library, you can import the functions and start using them 
 import { mapObj } from "mappingutils";
 
 // Your source object
-const source = {
+let source = {
   store: {
     book: [
       {
@@ -131,7 +133,7 @@ const source = {
 };
 
 // Your mapping
-const transformation = [
+let transformation = [
   {
     from: "$.store.book[*].category",
     to: "$.category",
@@ -143,7 +145,7 @@ const transformation = [
 ];
 
 // Apply the transformation
-const output = mapObj(source, transformation);
+let output = mapObj(source, transformation);
 console.log(output);
 ```
 
@@ -206,7 +208,7 @@ let objArr = [
   { id: 3, items: ["grape", "pear"] },
 ];
 
-let prop = "$.items[*]";
+let prop = "$.items[]";
 
 let mergedObj = mergeObjArr(objArr, prop);
 console.log(mergedObj);
@@ -229,78 +231,55 @@ Returns an array of objects resulting from transforming the input object.
 ```javascript
 import { mapObj } from "mappingutils";
 
-let transformation = [
-  {
-    from: "$.person.firstName",
-    to: "$.name.first",
-  },
-  {
-    from: "$.person.lastName",
-    to: "$.name.last",
-  },
-  {
-    from: "$.person.age",
-    to: "$.ageCategory",
-    fn: (age) => (age >= 18 ? "Adult" : "Minor"),
-  },
-  {
-    from: "$.person.items[*].item",
-    to: "$.items[*].code",
-  },
-];
-
 let source = {
-  person: {
-    firstName: "John",
-    lastName: "Doe",
-    age: 25,
-    items: [{ item: 11111 }, { item: 22222 }, { item: 33333 }],
-  },
+    event: {
+        agency: "MI6",
+        data: {
+            name: "James",
+            lastName: "Bond",
+            id: "007",
+        },
+        location: {
+            country: "UK",
+            city: "London",
+        },
+    },
+    attendees: [
+        { name: "M", role: "Director" },
+        { name: "Q", role: "Tech Expert" },
+    ],
 };
 
-let output = mapObj(source, transformation);
-console.log(JSON.stringify(output, null, 2));
+let transformations = [
+    {
+        from: "$.event.agency",
+        to: "$.agency",
+    },
+    {
+        from: ["$.event.data.name", "$.event.data.lastName"],
+        to: "$.agent",
+        fn: (name, lastName) => `${name} ${lastName}`,
+    },
+    {
+        from: "$.event.location.city",
+        to: "$.city",
+        fn: (city) => `${city}`.toUpperCase(),
+    },
+    {
+        from: "$.attendees[?(@.role == 'Director')].name",
+        to: "$.director",
+    },
+];
+
+let output = mapObj(source, transformations);
+console.log(output);
 ```
 Prints out
 
 ```javascript
 [
-  {
-    "items": [
-      {
-        "code": 11111
-      }
-    ],
-    "name": {
-      "first": "John",
-      "last": "Doe"
-    },
-    "ageCategory": "Adult"
-  },
-  {
-    "items": [
-      {
-        "code": 22222
-      }
-    ],
-    "name": {
-      "first": "John",
-      "last": "Doe"
-    },
-    "ageCategory": "Adult"
-  },
-  {
-    "items": [
-      {
-        "code": 33333
-      }
-    ],
-    "name": {
-      "first": "John",
-      "last": "Doe"
-    },
-    "ageCategory": "Adult"
-  }
+  { director: 'M', agency: 'MI6', agent: 'James Bond', city: 'LONDON' }
+]
 ```
 
 #### mapObjArr(source, mappings)
@@ -350,7 +329,7 @@ Prints out
 
 ## Running Tests
 To ensure that your changes are working as expected, you can run the test suite:
-- npm test
+- npm run test
 Make sure all tests pass before submitting a pull request.
 
 ## Changelog
