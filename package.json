@@ -36,7 +36,7 @@
         "mapping-utils",
         "mapping",
         "transformation",
-        "data transformation
+        "data transformation"
     ],
     "repository": {
         "type": "git",
