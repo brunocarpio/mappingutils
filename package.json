@@ -1,7 +1,7 @@
 {
     "name": "mappingutils",
     "description": "Lightweight Node.js utility for object mapping and data transformation.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "bcarpio181@gmail.com",
     "type": "module",
     "main": "dist/index.js",
@@ -36,7 +36,8 @@
         "mapping-utils",
         "mapping",
         "transformation",
-        "data transformation"
+        "data transformation",
+        "json"
     ],
     "repository": {
         "type": "git",
