@@ -1079,7 +1079,7 @@ describe("mapping with multiple from values", () => {
             },
         ];
         assert.throws(() => mapObj(source, transformation), {
-            name: "AssertionError",
+            name: "Error",
             message: /fn is required when "from" is an array/,
         });
     });

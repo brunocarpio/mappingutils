@@ -1,7 +1,6 @@
 //@ts-check
 
 import jp from "jsonpath";
-import assert from "node:assert/strict";
 
 // Function to compute the cartesian product of input arrays, adapted from Stack Overflow
 // Source: https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
@@ -134,10 +133,9 @@ export function mapObj(source, mappings) {
     for (let mapping of mappings) {
         if (!mapping.from) continue;
         if (mapping.fn)
-            assert.ok(
-                typeof mapping.fn === "function",
-                "fn needs to be a function",
-            );
+            if (typeof mapping.fn !== "function") {
+                throw new Error("fn needs to be a function");
+            }
         let to = mapping.to;
         if (to.includes("[]")) {
             to = to.replaceAll("[]", "[*]");
@@ -146,7 +144,9 @@ export function mapObj(source, mappings) {
             } else propsToMerge.add(to);
         }
         if (Array.isArray(mapping.from)) {
-            assert.ok(mapping.fn, 'fn is required when "from" is an array');
+            if (!mapping.fn && typeof mapping.fn !== "function") {
+                throw new Error('fn is required when "from" is an array');
+            }
             let cpath = [];
             let cvalues = [];
             for (let from of mapping.from) {
