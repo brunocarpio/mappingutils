@@ -120,9 +120,6 @@ export function mapObjArr(source, mappings) {
  * Transforms a `source` object based on the provided array of `mappings`.
  * @param {object} source - The input object.
  * @param {object[]} mappings - An array of mappings to apply to the input object.
- * @param {string|string[]} mappings[].from - The query expression for looking up in the source object.
- * @param {string} mappings[].to - The path to set the value in the target object.
- * @param {function=} mappings[].fn - An optional function to apply to the from value. Mandatory when mappings[].from is an array
  * @returns {object[]} An array of objects resulting from transforming the input object.
  */
 export function mapObj(source, mappings) {
@@ -131,79 +128,42 @@ export function mapObj(source, mappings) {
     let propsToMerge = new Set();
     let arrNodes = [];
     for (let mapping of mappings) {
-        if (!mapping.from) continue;
-        if (mapping.fn)
-            if (typeof mapping.fn !== "function") {
-                throw new Error("fn needs to be a function");
+        for (let [to, from] of Object.entries(mapping)) {
+            if (!from) continue;
+            if (to.includes("[]")) {
+                to = to.replaceAll("[]", "[*]");
+                if (to.slice(-3) !== "[*]") {
+                    propsToMerge.add(
+                        to.substring(0, to.lastIndexOf("[*]") + 3),
+                    );
+                } else propsToMerge.add(to);
             }
-        let to = mapping.to;
-        if (to.includes("[]")) {
-            to = to.replaceAll("[]", "[*]");
-            if (to.slice(-3) !== "[*]") {
-                propsToMerge.add(to.substring(0, to.lastIndexOf("[*]") + 3));
-            } else propsToMerge.add(to);
-        }
-        if (Array.isArray(mapping.from)) {
-            if (!mapping.fn && typeof mapping.fn !== "function") {
-                throw new Error('fn is required when "from" is an array');
-            }
-            let cpath = [];
-            let cvalues = [];
-            for (let from of mapping.from) {
-                let tvalues = [];
-                let tpath = [];
-                let nodes = jp.nodes(source, from);
-                for (let node of nodes) {
-                    tpath.push(node.path);
-                    tvalues.push(node.value);
+            let fn;
+            let nodes;
+            if (Array.isArray(from)) {
+                fn = from.at(-1);
+                if (typeof fn !== "function") {
+                    throw new Error("fn needs to be a function");
                 }
-                cpath.push(tpath);
-                cvalues.push(tvalues);
+                nodes = jp.nodes(source, from.at(0));
             }
-            cvalues = cvalues.map((arr) => {
-                if (arr.length === 0) {
-                    return [undefined];
-                } else return arr;
-            });
-            let cproductv = cartesian(...cvalues);
-            let cproductp = cartesian(...cpath);
-            let values = [];
-            for (let product of cproductv) {
-                let val = mapping.fn(...product);
-                values.push(val);
-            }
-            if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
-                for (let value of values) {
-                    commonProps = addProp(commonProps, to, value);
-                }
+            nodes = nodes ? nodes : jp.nodes(source, from);
+            if (nodes.length === 0) continue;
+            if (
+                nodes.length === 1 &&
+                !nodes[0].path.some((el) => Number.isInteger(el))
+            ) {
+                let value = nodes[0].value;
+                if (fn) value = fn(value);
+                commonProps = addProp(commonProps, to, value);
                 continue;
             }
-            let cnodes = values.map((value, i) => {
-                return {
-                    value,
-                    path: cproductp[i],
-                    to,
-                };
-            });
-            arrNodes = arrNodes.concat(cnodes);
-            continue;
+            for (let node of nodes) {
+                node.to = to;
+                if (fn) node.value = fn(node.value);
+            }
+            arrNodes = arrNodes.concat(nodes);
         }
-        let nodes = jp.nodes(source, mapping.from);
-        if (nodes.length === 0) continue;
-        if (
-            nodes.length === 1 &&
-            !nodes[0].path.some((el) => Number.isInteger(el))
-        ) {
-            let value = nodes[0].value;
-            if (mapping.fn) value = mapping.fn(value);
-            commonProps = addProp(commonProps, to, value);
-            continue;
-        }
-        for (let node of nodes) {
-            node.to = to;
-            if (mapping.fn) node.value = mapping.fn(node.value);
-        }
-        arrNodes = arrNodes.concat(nodes);
     }
     arrNodes.sort((a, b) => b.path.length - a.path.length);
     for (let node of arrNodes) {
