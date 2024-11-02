@@ -35,7 +35,7 @@ function strToPath(str) {
 function findParentPath(path, level) {
     let occurrence = 0;
     for (let i = path.length - 1; i > 0; i--) {
-        if (typeof path[i] === "number") occurrence++;
+        if (Number.isInteger(path[i])) occurrence++;
         if (occurrence === level) return path.slice(0, i + 1);
     }
     return null;
@@ -100,9 +100,6 @@ export function mergeObjArr(objArr, prop) {
  * Transforms a `source` input array of objects based on the provided array of `mappings`.
  * @param {object[]} source - An array of objects.
  * @param {object[]} mappings - An array of mappings to apply to every input object.
- * @param {string|string[]} mappings[].from - The query expression for looking up in the source object.
- * @param {string} mappings[].to - The path to set the value in the target object.
- * @param {function=} mappings[].fn - An optional function to apply to the from value. Mandatory when mappings[].from is an array
  * @returns {object[]} An array of objects resulting from transforming the input objects.
  */
 export function mapObjArr(source, mappings) {
@@ -136,33 +133,81 @@ export function mapObj(source, mappings) {
                     propsToMerge.add(
                         to.substring(0, to.lastIndexOf("[*]") + 3),
                     );
-                } else propsToMerge.add(to);
+                } else {
+                    propsToMerge.add(to);
+                }
             }
             let fn;
             let nodes;
             if (Array.isArray(from)) {
-                fn = from.at(-1);
+                if (from.length === 0) continue;
+                fn = from.pop();
                 if (typeof fn !== "function") {
-                    throw new Error("fn needs to be a function");
+                    throw new Error(
+                        "the last element of the 'from' array must be a function",
+                    );
                 }
-                nodes = jp.nodes(source, from.at(0));
+                if (from.length === 1) {
+                    nodes = jp.nodes(source, from.at(0));
+                } else {
+                    let cpath = [];
+                    let cvalues = [];
+                    for (let fromv of from) {
+                        let tvalues = [];
+                        let tpath = [];
+                        let nodes = jp.nodes(source, fromv);
+                        for (let node of nodes) {
+                            tpath.push(node.path);
+                            tvalues.push(node.value);
+                        }
+                        cpath.push(tpath);
+                        cvalues.push(tvalues);
+                    }
+                    cvalues = cvalues.map((arr) => {
+                        if (arr.length === 0) {
+                            return [undefined];
+                        } else return arr;
+                    });
+                    let cproductv = cartesian(...cvalues);
+                    let cproductp = cartesian(...cpath);
+                    let values = [];
+                    for (let product of cproductv) {
+                        let val = fn(...product);
+                        values.push(val);
+                    }
+                    if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
+                        for (let value of values) {
+                            commonProps = addProp(commonProps, to, value);
+                        }
+                        continue;
+                    }
+                    let cnodes = values.map((value, i) => {
+                        return {
+                            value,
+                            path: cproductp[i],
+                            to,
+                        };
+                    });
+                    arrNodes = arrNodes.concat(cnodes);
+                }
+            } else {
+                nodes = nodes ? nodes : jp.nodes(source, from);
+                if (nodes.length === 0) continue;
+                if (
+                    nodes.length === 1 &&
+                    !nodes[0].path.some((el) => Number.isInteger(el))
+                ) {
+                    let value = nodes[0].value;
+                    if (fn) value = fn(value);
+                    commonProps = addProp(commonProps, to, value);
+                    continue;
+                }
+                for (let node of nodes) {
+                    node.to = to;
+                    if (fn) node.value = fn(node.value);
+                }
+                arrNodes = arrNodes.concat(nodes);
             }
-            nodes = nodes ? nodes : jp.nodes(source, from);
-            if (nodes.length === 0) continue;
-            if (
-                nodes.length === 1 &&
-                !nodes[0].path.some((el) => Number.isInteger(el))
-            ) {
-                let value = nodes[0].value;
-                if (fn) value = fn(value);
-                commonProps = addProp(commonProps, to, value);
-                continue;
-            }
-            for (let node of nodes) {
-                node.to = to;
-                if (fn) node.value = fn(node.value);
-            }
-            arrNodes = arrNodes.concat(nodes);
         }
     }
     arrNodes.sort((a, b) => b.path.length - a.path.length);
@@ -187,8 +232,9 @@ export function mapObj(source, mappings) {
         }
         indexToObj.set(key, obj);
     }
-    if (indexToObj.size === 0)
+    if (indexToObj.size === 0) {
         return Object.keys(commonProps).length > 0 ? [commonProps] : [];
+    }
     for (let obj of indexToObj.values()) {
         Object.assign(obj, commonProps);
     }
