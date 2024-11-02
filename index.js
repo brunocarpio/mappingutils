@@ -202,25 +202,25 @@ export function mapObj(source, mapping) {
                     };
                 });
                 arrNodes = arrNodes.concat(cnodes);
-            }
-        } else {
-            nodes = nodes ? nodes : jp.nodes(source, from);
-            if (nodes.length === 0) continue;
-            if (
-                nodes.length === 1 &&
-                !nodes[0].path.some((el) => Number.isInteger(el))
-            ) {
-                let value = nodes[0].value;
-                if (fn) value = fn(value);
-                commonProps = addProp(commonProps, to, value);
                 continue;
             }
-            for (let node of nodes) {
-                node.to = to;
-                if (fn) node.value = fn(node.value);
-            }
-            arrNodes = arrNodes.concat(nodes);
         }
+        nodes = nodes ? nodes : jp.nodes(source, from);
+        if (nodes.length === 0) continue;
+        if (
+            nodes.length === 1 &&
+            !nodes[0].path.some((el) => Number.isInteger(el))
+        ) {
+            let value = nodes[0].value;
+            if (fn) value = fn(value);
+            commonProps = addProp(commonProps, to, value);
+            continue;
+        }
+        for (let node of nodes) {
+            node.to = to;
+            if (fn) node.value = fn(node.value);
+        }
+        arrNodes = arrNodes.concat(nodes);
     }
     arrNodes.sort((a, b) => b.path.length - a.path.length);
     for (let node of arrNodes) {

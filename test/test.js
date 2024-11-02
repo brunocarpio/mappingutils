@@ -5,77 +5,17 @@ import { mapObj } from "../index.js";
 import { describe, it } from "node:test";
 
 describe("mapping no nested objects", () => {
-    let transformation = [
-        {
-            from: "$.key",
-            to: "$.otherKey",
-        },
-    ];
-
     it("should return an empty array", () => {
         let source = {
             notKey: "some value",
         };
-        let arr = mapObj(source, transformation);
+        let mapping = {
+            ["$.otherKey"]: "$.key",
+        };
+        let arr = mapObj(source, mapping);
         assert.equal(arr.length, 0);
     });
-
-    it("should map a string value", () => {
-        let source = {
-            key: "some value",
-        };
-        let target = {
-            otherKey: "some value",
-        };
-        let arr = mapObj(source, transformation);
-        assert.equal(arr.length, 1);
-        assert.deepEqual(arr[0], target);
-    });
-
-    it("should map an array value", () => {
-        let source = {
-            key: [1, 2, 3, 4],
-        };
-        let target = {
-            otherKey: [1, 2, 3, 4],
-        };
-        let arr = mapObj(source, transformation);
-        assert.equal(arr.length, 1);
-        assert.deepEqual(arr[0], target);
-    });
-
-    it("should map an object value", () => {
-        let source = {
-            key: {
-                object: "some value",
-            },
-        };
-        let target = {
-            otherKey: {
-                object: "some value",
-            },
-        };
-        let arr = mapObj(source, transformation);
-        assert.equal(arr.length, 1);
-        assert.deepEqual(arr[0], target);
-    });
-
     it("should map all types with a different name in the target", () => {
-        let transformation = [
-            {
-                from: "$.number",
-                to: "$.otherNumber",
-            },
-            {
-                from: "$.array",
-                to: "$.otherArray",
-            },
-            {
-                from: "$.object",
-                to: "$.otherObject",
-            },
-        ];
-
         let source = {
             number: 1,
             array: [1, 2, 3, 4],
@@ -83,7 +23,11 @@ describe("mapping no nested objects", () => {
                 object: "value",
             },
         };
-
+        let mapping = {
+            ["$.otherNumber"]: "$.number",
+            ["$.otherArray"]: "$.array",
+            ["$.otherObject"]: "$.object",
+        };
         let target = {
             otherNumber: 1,
             otherArray: [1, 2, 3, 4],
@@ -91,91 +35,13 @@ describe("mapping no nested objects", () => {
                 object: "value",
             },
         };
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.equal(arr.length, 1);
         assert.deepEqual(arr[0], target);
     });
 });
-
 describe("mapping nested objects", () => {
-    let transformation = [
-        {
-            from: "$.key",
-            to: "$.object.anotherKey",
-        },
-    ];
-
-    it("should wrap a string value in the target", () => {
-        let source = {
-            key: "value",
-        };
-
-        let target = {
-            object: {
-                anotherKey: "value",
-            },
-        };
-
-        let arr = mapObj(source, transformation);
-        assert.equal(arr.length, 1);
-        assert.deepEqual(arr[0], target);
-    });
-
-    it("should wrap an array value in the target", () => {
-        let source = {
-            key: [1, 2, 3, 4, 5],
-        };
-
-        let target = {
-            object: {
-                anotherKey: [1, 2, 3, 4, 5],
-            },
-        };
-        let arr = mapObj(source, transformation);
-        assert.equal(arr.length, 1);
-        assert.deepEqual(arr[0], target);
-    });
-
-    it("should wrap an object value in the target", () => {
-        let source = {
-            key: {
-                propOne: 1,
-                propTwo: "two",
-                propThree: [1, 2, 3, "banana"],
-            },
-        };
-
-        let target = {
-            object: {
-                anotherKey: {
-                    propOne: 1,
-                    propTwo: "two",
-                    propThree: [1, 2, 3, "banana"],
-                },
-            },
-        };
-        let arr = mapObj(source, transformation);
-        assert.equal(arr.length, 1);
-        assert.deepEqual(arr[0], target);
-    });
-
     it("should wrap multiple properties in the target", () => {
-        let transformation = [
-            {
-                from: "$.object.propOne",
-                to: "$.objectWrapper.newObject.newPropOne",
-            },
-            {
-                from: "$.object.propTwo",
-                to: "$.objectWrapper.newObject.newPropTwo",
-            },
-            {
-                from: "$.object.propThree",
-                to: "$.objectWrapper.newObject.newPropThree",
-            },
-        ];
-
         let source = {
             object: {
                 propOne: 1,
@@ -183,7 +49,11 @@ describe("mapping nested objects", () => {
                 propThree: [1, 2, 3, "banana"],
             },
         };
-
+        let mapping = {
+            ["$.objectWrapper.newObject.newPropOne"]: "$.object.propOne",
+            ["$.objectWrapper.newObject.newPropTwo"]: "$.object.propTwo",
+            ["$.objectWrapper.newObject.newPropThree"]: "$.object.propThree",
+        };
         let target = {
             objectWrapper: {
                 newObject: {
@@ -193,12 +63,11 @@ describe("mapping nested objects", () => {
                 },
             },
         };
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.equal(arr.length, 1);
         assert.deepEqual(arr[0], target);
     });
 });
-
 describe("mapping array values in the source object", () => {
     let source = {
         date: "20240921",
@@ -235,35 +104,24 @@ describe("mapping array values in the source object", () => {
             },
         ],
     };
-
     it("should return an empty array when the source object is empty", () => {
         let emptySource = {};
-        let transformation = [
-            {
-                from: "$.items[0].item",
-                to: "$.item",
-            },
-        ];
-        let arr = mapObj(emptySource, transformation);
+        let mapping = {
+            ["$.item"]: "$.items[0].item",
+        };
+        let arr = mapObj(emptySource, mapping);
         assert.equal(arr.length, 0);
     });
-
-    it("should return an empty array when the transformation property does not exist", () => {
+    it("should return an empty array when the mapping property does not exist", () => {
         let missingPropertySource = {
             date: "20240921",
         };
-
-        let transformation = [
-            {
-                from: "$.items[*].nonExistentProperty",
-                to: "$.missingProperty",
-            },
-        ];
-
-        let arr = mapObj(missingPropertySource, transformation);
+        let mapping = {
+            ["$.missingProperty"]: "$.items[*].nonExistentProperty",
+        };
+        let arr = mapObj(missingPropertySource, mapping);
         assert.equal(arr.length, 0);
     });
-
     it("should return an empty array when nested arrays are empty", () => {
         let emptyNestedArraySource = {
             date: "20240921",
@@ -278,80 +136,52 @@ describe("mapping array values in the source object", () => {
                 },
             ],
         };
-
-        let transformation = [
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.constraints.availableCountry",
-            },
-        ];
-
-        let arr = mapObj(emptyNestedArraySource, transformation);
+        let mapping = {
+            ["$.constraints.availableCountry"]:
+                "$.items[*].availableCountries[*].country",
+        };
+        let arr = mapObj(emptyNestedArraySource, mapping);
         assert.equal(arr.length, 0);
     });
-
     it("should return an empty array when the items array is empty", () => {
         let emptyItemsSource = {
             date: "20240921",
             items: [],
         };
-        let transformation = [
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-        ];
-        let arr = mapObj(emptyItemsSource, transformation);
+        let mapping = {
+            ["$.item"]: "$.items[*].item",
+        };
+        let arr = mapObj(emptyItemsSource, mapping);
         assert.equal(arr.length, 0);
     });
-
     it("should create one object output, no extra property", () => {
-        let transformation = [
-            {
-                from: "$.items[0].item",
-                to: "$.item",
-            },
-        ];
-
+        let mapping = {
+            ["$.item"]: "$.items[0].item",
+        };
         let target = {
             item: 11111,
         };
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.equal(arr.length, 1);
         assert.deepEqual(arr[0], target);
     });
-
     it("should create one object output, and an extra non array value", () => {
-        let transformation = [
-            {
-                from: "$.items[0].item",
-                to: "$.item",
-            },
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-        ];
-
+        let mapping = {
+            ["$.item"]: "$.items[0].item",
+            ["$.date"]: "$.date",
+        };
         let target = {
             date: "20240921",
             item: 11111,
         };
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.equal(arr.length, 1);
         assert.deepEqual(arr[0], target);
     });
-
     it("should create three objects one of each item", () => {
-        let transformation = [
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-        ];
-
+        let mapping = {
+            ["$.item"]: "$.items[*].item",
+        };
         let target = [
             {
                 item: 11111,
@@ -363,12 +193,10 @@ describe("mapping array values in the source object", () => {
                 item: 33333,
             },
         ];
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
-
-    it("should skip transformations when a property is missing in some items", () => {
+    it("should skip mappings when a property is missing in some items", () => {
         let incompleteSource = {
             date: "20240921",
             items: [
@@ -385,14 +213,10 @@ describe("mapping array values in the source object", () => {
                 },
             ],
         };
-
-        let transformation = [
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.constraints.availableCountry",
-            },
-        ];
-
+        let mapping = {
+            ["$.constraints.availableCountry"]:
+                "$.items[*].availableCountries[*].country",
+        };
         let target = [
             {
                 constraints: { availableCountry: "US" },
@@ -401,23 +225,14 @@ describe("mapping array values in the source object", () => {
                 constraints: { availableCountry: "BR" },
             },
         ];
-
-        let arr = mapObj(incompleteSource, transformation);
+        let arr = mapObj(incompleteSource, mapping);
         assert.deepEqual(arr, target);
     });
-
     it("should create two objects and an additional non array field", () => {
-        let transformation = [
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-        ];
-
+        let mapping = {
+            ["$.item"]: "$.items[*].item",
+            ["$.date"]: "$.date",
+        };
         let target = [
             {
                 date: "20240921",
@@ -432,19 +247,14 @@ describe("mapping array values in the source object", () => {
                 item: 33333,
             },
         ];
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
-
     it("should create one object for every country value, nested array", () => {
-        let transformation = [
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.constraints.availableCountry",
-            },
-        ];
-
+        let mapping = {
+            ["$.constraints.availableCountry"]:
+                "$.items[*].availableCountries[*].country",
+        };
         let target = [
             {
                 constraints: {
@@ -472,23 +282,15 @@ describe("mapping array values in the source object", () => {
                 },
             },
         ];
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
-
     it("should create one object for every country value and an item value header for each of the five", () => {
-        let transformation = [
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.constraints.availableCountry",
-            },
-        ];
-
+        let mapping = {
+            ["$.item"]: "$.items[*].item",
+            ["$.constraints.availableCountry"]:
+                "$.items[*].availableCountries[*].country",
+        };
         let target = [
             {
                 item: 11111,
@@ -521,27 +323,16 @@ describe("mapping array values in the source object", () => {
                 },
             },
         ];
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
-
     it("should create one object for every array value and the non repeating value should be present all of them", () => {
-        let transformation = [
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.constraints.availableCountry",
-            },
-        ];
-
+        let mapping = {
+            ["$.date"]: "$.date",
+            ["$.item"]: "$.items[*].item",
+            ["$.constraints.availableCountry"]:
+                "$.items[*].availableCountries[*].country",
+        };
         let target = [
             {
                 date: "20240921",
@@ -579,12 +370,10 @@ describe("mapping array values in the source object", () => {
                 },
             },
         ];
-
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
 });
-
 describe("mapping array values in the target object", () => {
     let source = {
         date: "20240921",
@@ -626,40 +415,25 @@ describe("mapping array values in the target object", () => {
             },
         ],
     };
-
     it("should return an empty array when items array is empty", () => {
         let emptyItemsSource = {
             date: "20240921",
             items: [],
         };
-
-        let transformation = [
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.availableCountries[]",
-            },
-        ];
-
-        let arr = mapObj(emptyItemsSource, transformation);
+        let mapping = {
+            ["$.availableCountries[]"]:
+                "$.items[*].availableCountries[*].country",
+        };
+        let arr = mapObj(emptyItemsSource, mapping);
         assert.equal(arr.length, 0);
     });
-
     it("should aggregate all countries for item", () => {
-        let transformation = [
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.availableCountries[]",
-            },
-        ];
-
+        let mapping = {
+            ["$.date"]: "$.date",
+            ["$.item"]: "$.items[*].item",
+            ["$.availableCountries[]"]:
+                "$.items[*].availableCountries[*].country",
+        };
         let target = [
             {
                 date: "20240921",
@@ -677,30 +451,18 @@ describe("mapping array values in the target object", () => {
                 availableCountries: ["BR"],
             },
         ];
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
-
     it("should add properties to objects in the target array", () => {
-        let transformation = [
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.availableCountries[].code",
-            },
-            {
-                from: "$.items[*].availableCountries[*].countryName",
-                to: "$.availableCountries[].name",
-            },
-        ];
-
+        let mapping = {
+            ["$.date"]: "$.date",
+            ["$.item"]: "$.items[*].item",
+            ["$.availableCountries[].code"]:
+                "$.items[*].availableCountries[*].country",
+            ["$.availableCountries[].name"]:
+                "$.items[*].availableCountries[*].countryName",
+        };
         let target = [
             {
                 date: "20240921",
@@ -736,10 +498,9 @@ describe("mapping array values in the target object", () => {
                 availableCountries: [{ code: "BR", name: "Brasil" }],
             },
         ];
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
-
     it("should handle items with empty availableCountries arrays", () => {
         let sourceWithEmptyCountries = {
             date: "20240921",
@@ -763,22 +524,12 @@ describe("mapping array values in the target object", () => {
                 },
             ],
         };
-
-        let transformation = [
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.availableCountries[]",
-            },
-        ];
-
+        let mapping = {
+            ["$.date"]: "$.date",
+            ["$.item"]: "$.items[*].item",
+            ["$.availableCountries[]"]:
+                "$.items[*].availableCountries[*].country",
+        };
         let target = [
             {
                 date: "20240921",
@@ -794,11 +545,9 @@ describe("mapping array values in the target object", () => {
                 item: 33333,
             },
         ];
-
-        let arr = mapObj(sourceWithEmptyCountries, transformation);
+        let arr = mapObj(sourceWithEmptyCountries, mapping);
         assert.deepEqual(new Set(arr), new Set(target));
     });
-
     it("should handle missing properties in availableCountries", () => {
         let sourceWithMissingProps = {
             date: "20240921",
@@ -816,26 +565,14 @@ describe("mapping array values in the target object", () => {
                 },
             ],
         };
-
-        let transformation = [
-            {
-                from: "$.date",
-                to: "$.date",
-            },
-            {
-                from: "$.items[*].item",
-                to: "$.item",
-            },
-            {
-                from: "$.items[*].availableCountries[*].country",
-                to: "$.availableCountries[].code",
-            },
-            {
-                from: "$.items[*].availableCountries[*].countryName",
-                to: "$.availableCountries[].name",
-            },
-        ];
-
+        let mapping = {
+            ["$.date"]: "$.date",
+            ["$.item"]: "$.items[*].item",
+            ["$.availableCountries[].code"]:
+                "$.items[*].availableCountries[*].country",
+            ["$.availableCountries[].name"]:
+                "$.items[*].availableCountries[*].countryName",
+        };
         let target = [
             {
                 date: "20240921",
@@ -850,12 +587,10 @@ describe("mapping array values in the target object", () => {
                 ],
             },
         ];
-
-        let arr = mapObj(sourceWithMissingProps, transformation);
+        let arr = mapObj(sourceWithMissingProps, mapping);
         assert.deepEqual(arr, target);
     });
 });
-
 describe("mapping with filters in the source", () => {
     let source = `
     {
@@ -895,13 +630,9 @@ describe("mapping with filters in the source", () => {
     `;
     source = JSON.parse(source);
     it("should filter only the reference category book", () => {
-        let transformation = [
-            {
-                from: '$.store.book[?(@.category=="reference")]',
-                to: "$.categories",
-            },
-        ];
-
+        let mapping = {
+            ["$.categories"]: '$.store.book[?(@.category=="reference")]',
+        };
         let target = [
             {
                 categories: {
@@ -912,25 +643,15 @@ describe("mapping with filters in the source", () => {
                 },
             },
         ];
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
     it("should filter only the fiction category books", () => {
-        let transformation = [
-            {
-                from: "$.storeNumber",
-                to: "$.store",
-            },
-            {
-                from: '$.store.book[?(@.category=="fiction")].author',
-                to: "$.book.author",
-            },
-            {
-                from: '$.store.book[?(@.category=="fiction")].title',
-                to: "$.book.title",
-            },
-        ];
-
+        let mapping = {
+            ["$.store"]: "$.storeNumber",
+            ["$.book.author"]: '$.store.book[?(@.category=="fiction")].author',
+            ["$.book.title"]: '$.store.book[?(@.category=="fiction")].title',
+        };
         let target = [
             {
                 store: "098",
@@ -954,11 +675,10 @@ describe("mapping with filters in the source", () => {
                 },
             },
         ];
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
 });
-
 describe("mapping with functions", () => {
     let source = `
     {
@@ -997,19 +717,16 @@ describe("mapping with functions", () => {
     `;
     source = JSON.parse(source);
     it("should apply uppercase to the authors and trim the title names", () => {
-        let transformation = [
-            {
-                from: '$.store.book[?(@.category=="reference")].author',
-                to: "$.book.author",
-                fn: (author) => author.toUpperCase(),
-            },
-            {
-                from: '$.store.book[?(@.category=="reference")].title',
-                to: "$.book.title",
-                fn: (title) => title.trim(),
-            },
-        ];
-
+        let mapping = {
+            ["$.book.author"]: [
+                '$.store.book[?(@.category=="reference")].author',
+                (author) => author.toUpperCase(),
+            ],
+            ["$.book.title"]: [
+                '$.store.book[?(@.category=="reference")].title',
+                (title) => title.trim(),
+            ],
+        };
         let target = [
             {
                 book: {
@@ -1018,11 +735,10 @@ describe("mapping with functions", () => {
                 },
             },
         ];
-        let arr = mapObj(source, transformation);
+        let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
 });
-
 describe("mapping with multiple from values", () => {
     it("should map and concatenate properties using a function", () => {
         let source = {
@@ -1033,17 +749,16 @@ describe("mapping with multiple from values", () => {
                 },
             },
         };
-        let transformation = [
-            {
-                from: ["$.event.data.name", "$.event.data.lastName"],
-                to: "$.agent",
-                fn: (a, b) => `${a} ${b}`,
-            },
-        ];
-        let output = mapObj(source, transformation);
+        let mapping = {
+            ["$.agent"]: [
+                "$.event.data.name",
+                "$.event.data.lastName",
+                (a, b) => `${a} ${b}`,
+            ],
+        };
+        let output = mapObj(source, mapping);
         assert.deepStrictEqual(output, [{ agent: "James Bond" }]);
     });
-
     it("should handle missing properties in source", () => {
         let source = {
             event: {
@@ -1052,17 +767,16 @@ describe("mapping with multiple from values", () => {
                 },
             },
         };
-        let transformation = [
-            {
-                from: ["$.event.data.name", "$.event.data.lastName"],
-                to: "$.agent",
-                fn: (a, b) => `${a} ${b}`,
-            },
-        ];
-        let output = mapObj(source, transformation);
+        let mapping = {
+            ["$.agent"]: [
+                "$.event.data.name",
+                "$.event.data.lastName",
+                (a, b) => `${a} ${b}`,
+            ],
+        };
+        let output = mapObj(source, mapping);
         assert.deepStrictEqual(output, [{ agent: "undefined Bond" }]);
     });
-
     it("should throw error when fn is missing for array from", () => {
         let source = {
             event: {
@@ -1072,19 +786,15 @@ describe("mapping with multiple from values", () => {
                 },
             },
         };
-        let transformation = [
-            {
-                from: ["$.event.data.name", "$.event.data.lastName"],
-                to: "$.agent",
-            },
-        ];
-        assert.throws(() => mapObj(source, transformation), {
+        let mapping = {
+            ["$.agent"]: ["$.event.data.name", "$.event.data.lastName"],
+        };
+        assert.throws(() => mapObj(source, mapping), {
             name: "Error",
-            message: /fn is required when "from" is an array/,
+            message: /the last element of the 'from' array must be a function/,
         });
     });
-
-    it("should handle multiple mappings in a single transformation", () => {
+    it("should handle multiple mappings in a single mapping", () => {
         let source = {
             event: {
                 agency: "MI6",
@@ -1094,24 +804,20 @@ describe("mapping with multiple from values", () => {
                 },
             },
         };
-        let transformation = [
-            {
-                from: "$.event.agency",
-                to: "$.agency",
-            },
-            {
-                from: ["$.event.data.name", "$.event.data.lastName"],
-                to: "$.agent",
-                fn: (a, b) => `${a} ${b}`,
-            },
-        ];
-        let output = mapObj(source, transformation);
+        let mapping = {
+            ["$.agency"]: "$.event.agency",
+            ["$.agent"]: [
+                "$.event.data.name",
+                "$.event.data.lastName",
+                (a, b) => `${a} ${b}`,
+            ],
+        };
+        let output = mapObj(source, mapping);
         assert.deepStrictEqual(output, [
             { agency: "MI6", agent: "James Bond" },
         ]);
     });
-
-    it("should handle complex transformation functions with nested paths", () => {
+    it("should handle complex mapping functions with nested paths", () => {
         let source = {
             person: {
                 name: "John",
@@ -1122,55 +828,50 @@ describe("mapping with multiple from values", () => {
                 },
             },
         };
-        let transformation = [
-            {
-                from: [
-                    "$.person.name",
-                    "$.person.lastName",
-                    "$.person.details.birthDate",
-                ],
-                to: "$.summary",
-                fn: (firstName, lastName, birthDate) => {
+        let mapping = {
+            ["$.summary"]: [
+                "$.person.name",
+                "$.person.lastName",
+                "$.person.details.birthDate",
+                (firstName, lastName, birthDate) => {
                     const age =
                         new Date().getFullYear() -
                         new Date(birthDate).getFullYear();
                     return `${firstName} ${lastName}, Age: ${age}`;
                 },
-            },
-        ];
-        let output = mapObj(source, transformation);
+            ],
+        };
+        let output = mapObj(source, mapping);
         let currentYear = new Date().getFullYear();
         let expectedAge = currentYear - 1979;
         assert.deepStrictEqual(output, [
             { summary: `John Doe, Age: ${expectedAge}` },
         ]);
     });
-
-    it("should handle transformation functions that throw errors", () => {
+    it("should handle mapping functions that throw errors", () => {
         let source = {
             user: {
                 lastName: "Doe",
             },
         };
-        let transformation = [
-            {
-                from: ["$.user.name", "$.user.lastName"],
-                to: "$.fullName",
-                fn: (firstName, lastName) => {
+        let mapping = {
+            ["$.fullName"]: [
+                "$.user.name",
+                "$.user.lastName",
+                (firstName, lastName) => {
                     if (!firstName || !lastName) {
                         throw new Error("Missing name components");
                     }
                     return `${firstName} ${lastName}`;
                 },
-            },
-        ];
-        assert.throws(() => mapObj(source, transformation), {
+            ],
+        };
+        assert.throws(() => mapObj(source, mapping), {
             name: "Error",
             message: /Missing name components/,
         });
     });
-
-    it("should handle edge case where transformation function returns undefined", () => {
+    it("should handle edge case where mapping function returns undefined", () => {
         let source = {
             event: {
                 details: {
@@ -1179,20 +880,18 @@ describe("mapping with multiple from values", () => {
                 },
             },
         };
-        let transformation = [
-            {
-                from: ["$.event.details.type", "$.event.details.year"],
-                to: "$.summary",
-                fn: (type, year) => {
-                    // Simulate undefined return from a function
+        let mapping = {
+            ["$.summary"]: [
+                "$.event.details.type",
+                "$.event.details.year",
+                (type, year) => {
                     return undefined;
                 },
-            },
-        ];
-        let output = mapObj(source, transformation);
+            ],
+        };
+        let output = mapObj(source, mapping);
         assert.deepStrictEqual(output, [{ summary: undefined }]);
     });
-
     it("should handle complex function that uses intermediate values from object", () => {
         let source = {
             order: {
@@ -1203,16 +902,16 @@ describe("mapping with multiple from values", () => {
                 discount: 0.1,
             },
         };
-        let transformation = [
-            {
-                from: ["$.order.item.price", "$.order.discount"],
-                to: "$.finalPrice",
-                fn: (price, discount) => {
+        let mapping = {
+            ["$.finalPrice"]: [
+                "$.order.item.price",
+                "$.order.discount",
+                (price, discount) => {
                     return price - price * discount;
                 },
-            },
-        ];
-        let output = mapObj(source, transformation);
+            ],
+        };
+        let output = mapObj(source, mapping);
         assert.deepStrictEqual(output, [{ finalPrice: 900 }]);
     });
 });
