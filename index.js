@@ -97,10 +97,10 @@ export function mergeObjArr(objArr, prop) {
 }
 
 /**
- * Transforms each object in a `source` array based on the provided `mapping` transformation.
+ * Transforms each object in the `source` array based on the provided `mapping` transformation.
  *
  * @param {object[]} source - An array of source objects to transform.
- * @param {object} mapping - A mapping object defining the transformation rules. Each key-value pair should use JSONPath syntax:
+ * @param {object} mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
@@ -125,7 +125,7 @@ export function mapObjArr(source, mapping) {
  * Transforms the `source` object  based on the provided `mapping` transformation.
  *
  * @param {object} source - A source object to transform.
- * @param {object} mapping - A mapping object defining the transformation rules. Each key-value pair should use JSONPath syntax:
+ * @param {object} mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
@@ -154,10 +154,16 @@ export function mapObj(source, mapping) {
         let nodes;
         if (Array.isArray(from)) {
             if (from.length === 0) continue;
-            fn = from.pop();
+            fn = from.at(-1);
+            from = from.toSpliced(-1);
             if (typeof fn !== "function") {
                 throw new Error(
                     "the last element of the 'from' array must be a function",
+                );
+            }
+            if (from.length === 0) {
+                throw new Error(
+                    "there should be at least one more element than the function in the 'from' array",
                 );
             }
             if (from.length === 1) {
