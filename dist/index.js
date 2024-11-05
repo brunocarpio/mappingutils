@@ -34,7 +34,7 @@ function strToPath(str) {
 function findParentPath(path, level) {
   let occurrence = 0;
   for (let i = path.length - 1; i > 0; i--) {
-    if (typeof path[i] === "number") occurrence++;
+    if (Number.isInteger(path[i])) occurrence++;
     if (occurrence === level) return path.slice(0, i + 1);
   }
   return null;
@@ -95,18 +95,23 @@ export function mergeObjArr(objArr, prop) {
 }
 
 /**
- * Transforms a `source` input array of objects based on the provided array of `mappings`.
- * @param {object[]} source - An array of objects.
- * @param {object[]} mappings - An array of mappings to apply to every input object.
- * @param {string|string[]} mappings[].from - The query expression for looking up in the source object.
- * @param {string} mappings[].to - The path to set the value in the target object.
- * @param {function=} mappings[].fn - An optional function to apply to the from value. Mandatory when mappings[].from is an array
- * @returns {object[]} An array of objects resulting from transforming the input objects.
+ * Transforms each object in the `source` array based on the provided `mapping` transformation.
+ *
+ * @param {object[]} source - An array of source objects to transform.
+ * @param {object} mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
+ *   - The key represents the target field path in the transformed object.
+ *   - The value represents the source field path(s) in the source object.
+ *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
+ *     - If multiple source fields are required, provide an array where:
+ *       - Each element before the last is a JSONPath string pointing to a source field.
+ *       - The last element is a function that takes the resolved source values as arguments and computes the target field value.
+ *
+ * @returns {object[]} An array of transformed objects, with fields derived from applying the `mapping` to each `source` object.
  */
-export function mapObjArr(source, mappings) {
+export function mapObjArr(source, mapping) {
   let result = [];
   for (let obj of source) {
-    let transformed = mapObj(obj, mappings);
+    let transformed = mapObj(obj, mapping);
     for (let obj of transformed) {
       result.push(obj);
     }
@@ -115,87 +120,102 @@ export function mapObjArr(source, mappings) {
 }
 
 /**
- * Transforms a `source` object based on the provided array of `mappings`.
- * @param {object} source - The input object.
- * @param {object[]} mappings - An array of mappings to apply to the input object.
- * @param {string|string[]} mappings[].from - The query expression for looking up in the source object.
- * @param {string} mappings[].to - The path to set the value in the target object.
- * @param {function=} mappings[].fn - An optional function to apply to the from value. Mandatory when mappings[].from is an array
- * @returns {object[]} An array of objects resulting from transforming the input object.
+ * Transforms the `source` object  based on the provided `mapping` transformation.
+ *
+ * @param {object} source - A source object to transform.
+ * @param {object} mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
+ *   - The key represents the target field path in the transformed object.
+ *   - The value represents the source field path(s) in the source object.
+ *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
+ *     - If multiple source fields are required, provide an array where:
+ *       - Each element before the last is a JSONPath string pointing to a source field.
+ *       - The last element is a function that takes the resolved source values as arguments and computes the target field value.
+ *
+ * @returns {object[]} An array of transformed objects, with fields derived from applying the `mapping` to the `source` object.
  */
-export function mapObj(source, mappings) {
+export function mapObj(source, mapping) {
   let commonProps = {};
   let indexToObj = new Map();
   let propsToMerge = new Set();
   let arrNodes = [];
-  for (let mapping of mappings) {
-    if (!mapping.from) continue;
-    if (mapping.fn) if (typeof mapping.fn !== "function") {
-      throw new Error("fn needs to be a function");
-    }
-    let to = mapping.to;
+  for (let [to, from] of Object.entries(mapping)) {
+    if (!from) continue;
     if (to.includes("[]")) {
       to = to.replaceAll("[]", "[*]");
       if (to.slice(-3) !== "[*]") {
         propsToMerge.add(to.substring(0, to.lastIndexOf("[*]") + 3));
-      } else propsToMerge.add(to);
+      } else {
+        propsToMerge.add(to);
+      }
     }
-    if (Array.isArray(mapping.from)) {
-      if (!mapping.fn && typeof mapping.fn !== "function") {
-        throw new Error('fn is required when "from" is an array');
+    let fn;
+    let nodes;
+    if (Array.isArray(from)) {
+      if (from.length === 0) continue;
+      fn = from.at(-1);
+      from = from.toSpliced(-1);
+      if (typeof fn !== "function") {
+        throw new Error("the last element of the 'from' array must be a function");
       }
-      let cpath = [];
-      let cvalues = [];
-      for (let from of mapping.from) {
-        let tvalues = [];
-        let tpath = [];
-        let nodes = jp.nodes(source, from);
-        for (let node of nodes) {
-          tpath.push(node.path);
-          tvalues.push(node.value);
+      if (from.length === 0) {
+        throw new Error("there should be at least one more element than the function in the 'from' array");
+      }
+      if (from.length === 1) {
+        nodes = jp.nodes(source, from.at(0));
+      } else {
+        let cpath = [];
+        let cvalues = [];
+        for (let fromv of from) {
+          let tvalues = [];
+          let tpath = [];
+          let nodes = jp.nodes(source, fromv);
+          for (let node of nodes) {
+            tpath.push(node.path);
+            tvalues.push(node.value);
+          }
+          cpath.push(tpath);
+          cvalues.push(tvalues);
         }
-        cpath.push(tpath);
-        cvalues.push(tvalues);
-      }
-      cvalues = cvalues.map(arr => {
-        if (arr.length === 0) {
-          return [undefined];
-        } else return arr;
-      });
-      let cproductv = cartesian(...cvalues);
-      let cproductp = cartesian(...cpath);
-      let values = [];
-      for (let product of cproductv) {
-        let val = mapping.fn(...product);
-        values.push(val);
-      }
-      if (!cpath.flat(2).some(el => Number.isInteger(el))) {
-        for (let value of values) {
-          commonProps = addProp(commonProps, to, value);
+        cvalues = cvalues.map(arr => {
+          if (arr.length === 0) {
+            return [undefined];
+          } else return arr;
+        });
+        let cproductv = cartesian(...cvalues);
+        let cproductp = cartesian(...cpath);
+        let values = [];
+        for (let product of cproductv) {
+          let val = fn(...product);
+          values.push(val);
         }
+        if (!cpath.flat(2).some(el => Number.isInteger(el))) {
+          for (let value of values) {
+            commonProps = addProp(commonProps, to, value);
+          }
+          continue;
+        }
+        let cnodes = values.map((value, i) => {
+          return {
+            value,
+            path: cproductp[i],
+            to
+          };
+        });
+        arrNodes = arrNodes.concat(cnodes);
         continue;
       }
-      let cnodes = values.map((value, i) => {
-        return {
-          value,
-          path: cproductp[i],
-          to
-        };
-      });
-      arrNodes = arrNodes.concat(cnodes);
-      continue;
     }
-    let nodes = jp.nodes(source, mapping.from);
+    nodes = nodes ? nodes : jp.nodes(source, from);
     if (nodes.length === 0) continue;
     if (nodes.length === 1 && !nodes[0].path.some(el => Number.isInteger(el))) {
       let value = nodes[0].value;
-      if (mapping.fn) value = mapping.fn(value);
+      if (fn) value = fn(value);
       commonProps = addProp(commonProps, to, value);
       continue;
     }
     for (let node of nodes) {
       node.to = to;
-      if (mapping.fn) node.value = mapping.fn(node.value);
+      if (fn) node.value = fn(node.value);
     }
     arrNodes = arrNodes.concat(nodes);
   }
@@ -217,7 +237,9 @@ export function mapObj(source, mappings) {
     }
     indexToObj.set(key, obj);
   }
-  if (indexToObj.size === 0) return Object.keys(commonProps).length > 0 ? [commonProps] : [];
+  if (indexToObj.size === 0) {
+    return Object.keys(commonProps).length > 0 ? [commonProps] : [];
+  }
   for (let obj of indexToObj.values()) {
     Object.assign(obj, commonProps);
   }

@@ -1,13 +1,11 @@
 # mappingutils
 
-Lightweight Node.js utility for object mapping and data transformation.
-
-![screencast](https://github.com/brunocarpio/mappingUtils/blob/main/recording.gif)
+Lightweight JSON transformation utility.
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Usage Guide](#usage-guide)
+- [Quick start](#quick-start)
 - [Basic Usage](#basic-usage)
 - [Use Cases](#use-cases)
 - [Functions](#functions)
@@ -22,8 +20,7 @@ Lightweight Node.js utility for object mapping and data transformation.
 - [License](#license)
 
 ## Prerequisites
-- Node.js v18 or higher: Ensure that your environment has Node.js installed. You can download it from [Node.js official website](https://nodejs.org/).
-- npm (Node Package Manager): npm comes bundled with Node.js, so make sure it's available.
+- Node.js v18 or higher
 
 ## Installation
 You can install mappingutils directly from npm:
@@ -32,15 +29,9 @@ You can install mappingutils directly from npm:
 Ensure that you are using Node.js version 18 or higher. You can check your Node version with the following command:
 - `node -v`
 
-## Usage Guide
-### Using as a Library 
-1) Ensure you are using Node version 18 or higher. You can check your Node version with the following command:
-    - `node -v`
+## Quick start
+**Node.js**
 
-2) Install the library using npm:
-    - `npm install mappingutils`
-
-3) Create a new file (e.g., test.js) in your project directory and add your mapping code. For example:
 ```javascript
 import { mapObj } from "mappingutils";
 
@@ -55,56 +46,32 @@ let source = {
   },
 };
 
-let transformation = [
-  {
-    from: ["$.event.data.name", "$.event.data.lname"],
-    to: "$.agent",
-    fn: (name, lname) => `${name} ${lname}`.toUpperCase(),
-  },
-  {
-    from: "$.event.data.id",
-    to: "$.code",
-  },
-];
+let mapping = {
+  ["$.code"]: "$.event.data.id",
+  ["$.private.agency"]: "$.event.agency",
+  ["$.private.agent"]: [
+      "$.event.data.name",
+      "$.event.data.lname",
+      (a, b) => `${a} ${b}`.toUpperCase(),
+  ],
+};
 
-let output = mapObj(source, transformation);
+let output = mapObj(source, mapping);
 console.log(output);
 ```
-4) Run your file using Node.js:
-    * `node test.js`
-    
+
 It will print out
 ```javascript
 [
   {
-    agent: "JAMES BOND",
     code: "007",
+    private: {
+      agency: "MI6",
+      agent: "JAMES BOND",
+    }
   }
 ]
 ```
-
-### Downloading and Contributing to the Repository
-1) Ensure you are using Node version 18 or higher. You can check your Node version with the following command:
-    - `node -v`
-
-2) Navigate to the directory where you want to clone the repository. Open a terminal (or Git Bash) and run the following command to clone the repository:
-    - `git clone [repository_url](https://github.com/brunocarpio/mappingUtils.git)`
-
-Alternatively, you can download the repository as a .zip file and extract it to the desired location.
-
-3) Open the repository in your preferred text editor, such as VSCode.
-
-4) Install the necessary dependencies by running:
-    - `npm install`
-
-This will install all the required packages defined in package.json.
-
-5) Create a new file (e.g., test.js) inside the project or use the existing one. Add your mapping code as shown in the examples below.
-
-6) To run your test.js file, use the following command in the terminal:
-    - `node test.js`
-    
-Ensure that the terminal is pointed to the directory containing the test.js file, or specify the path directly.
 
 ## Basic Usage
 It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) syntax for selecting the values from the input and a similar syntax for the output.
@@ -133,19 +100,13 @@ let source = {
 };
 
 // Your mapping
-let transformation = [
-  {
-    from: "$.store.book[*].category",
-    to: "$.category",
-  },
-  {
-    from: "$.store.book[*].title",
-    to: "$.book.title",
-  },
-];
+let mapping = {
+  ["$.category"]: "$.store.book[*].category",
+  ["$.book.title"]: "$.store.book[*].title",
+};
 
 // Apply the transformation
-let output = mapObj(source, transformation);
+let output = mapObj(source, mapping);
 console.log(output);
 ```
 
@@ -196,7 +157,7 @@ Prints out
 
 #### mergeObjArr(objArr, prop)
 
-Merge the `prop` array values of the object `objArr`. Returns a deep copy of the first object in the array, with the `prop` array values concatenated.
+Merges the `prop` array values of the object `objArr`. Returns a deep copy of the first object in the array, with the `prop` array values concatenated.
 
 - Example: 
 ```javascript
@@ -224,8 +185,16 @@ Prints out
 
 #### mapObj(source, mappings)
 
-Transforms an input object `source` given the provided array of mappings `mappings` where a mapping is an object with from, to, and an optional property fn to apply to the from value.
-Returns an array of objects resulting from transforming the input object.
+Transforms the `source` object based on the provided `mapping` transformation, where a mapping is an object with from, to, and an optional property fn to apply to the from value.
+Each mapping object's key-value pair should use JSONPath syntax:
+- The key represents the target field path in the transformed object.
+- The value represents the source field path(s) in the source object.
+- If a single source field is required, the value should be a JSONPath string pointing to that field.
+- If multiple source fields are required, provide an array where:
+- Each element before the last is a JSONPath string pointing to a source field.
+- The last element is a function that takes the resolved source values as arguments and computes the target field value.
+
+Returns an array of transformed objects, with fields derived from applying the `mapping` to the `source` object.
 
 - Example: 
 ```javascript
@@ -250,28 +219,18 @@ let source = {
     ],
 };
 
-let transformations = [
-    {
-        from: "$.event.agency",
-        to: "$.agency",
-    },
-    {
-        from: ["$.event.data.name", "$.event.data.lastName"],
-        to: "$.agent",
-        fn: (name, lastName) => `${name} ${lastName}`,
-    },
-    {
-        from: "$.event.location.city",
-        to: "$.city",
-        fn: (city) => `${city}`.toUpperCase(),
-    },
-    {
-        from: "$.attendees[?(@.role == 'Director')].name",
-        to: "$.director",
-    },
-];
+let mapping = {
+    ["$.agency"]: "$.event.agency",
+    ["$.agent"]: [
+        "$.event.data.name",
+        "$.event.data.lastName",
+        (name, lastName) => `${name} ${lastName}`,
+    ],
+    ["$.city"]: ["$.event.location.city", (city) => `${city}`.toUpperCase()],
+    ["$.director"]: "$.attendees[?(@.role == 'Director')].name",
+};
 
-let output = mapObj(source, transformations);
+let output = mapObj(source, mapping);
 console.log(output);
 ```
 Prints out
@@ -284,9 +243,8 @@ Prints out
 
 #### mapObjArr(source, mappings)
 
-Transforms an input array of objects `source` using the provided array of mappings `mappings`. Returns an array of objects resulting from transforming the input objects.
-
-Each mapping can include an optional parameter `fn`, which allows for additional processing on the value being transformed. The `fn` parameter accepts a function that takes the source value and returns the modified result. This can be a simple transformation function, like converting a score to a grade, or it can even call another function from the same library for more complex transformations.
+Transforms each object in the `source` array based on the provided `mapping` transformation.
+The mapping object should follow the same conventions as in the `mapObj` function.
 
 - Example: 
 ```javascript
@@ -297,19 +255,12 @@ let source = [
   { id: 2, name: "Bob", score: 80 },
 ];
 
-let transformation = [
-  {
-    from: "$.name",
-    to: "$.fullName",
-  },
-  {
-    from: "$.score",
-    to: "$.grade",
-    fn: (score) => (score >= 85 ? "A" : "B"),
-  },
-];
+let mapping = {
+  ["$.fname"]: "$.name",
+  ["$.grade"]: ["$.score", (score) => (score >= 85 ? "A" : "B")],
+};
 
-let outputArr = mapObjArr(source, transformation);
+let outputArr = mapObjArr(source, mapping);
 console.log(JSON.stringify(outputArr, null, 2));
 ```
 Prints out
@@ -317,11 +268,11 @@ Prints out
 ```javascript
 [
   {
-    "fullName": "Alice",
+    "fname": "Alice",
     "grade": "A"
   },
   {
-    "fullName": "Bob",
+    "fname": "Bob",
     "grade": "B"
   }
 ]
