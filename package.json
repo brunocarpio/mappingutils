@@ -1,10 +1,16 @@
 {
     "name": "mappingutils",
     "description": "Lightweight JSON transformation utility.",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "author": "bcarpio181@gmail.com",
     "type": "module",
-    "main": "dist/index.js",
+    "exports": {
+        "node": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "default": "./dist/mappingutils.min.js"
+    },
     "files": [
         "dist"
     ],
@@ -12,7 +18,10 @@
         "test": "test"
     },
     "scripts": {
-        "build": "babel index.js --out-file dist/index.js",
+        "build:cjs": "BABEL_ENV=cjs babel index.js --out-file dist/index.cjs",
+        "build:esm": "babel index.js --out-file dist/index.js",
+        "build:browser": "webpack",
+        "build": "npm run build:cjs && npm run build:esm && npm run build:browser",
         "test": "node --test",
         "debug": "npm test -- --inspect-brk"
     },
@@ -22,10 +31,13 @@
     "devDependencies": {
         "@babel/cli": "^7.25.6",
         "@babel/core": "^7.25.2",
+        "@babel/plugin-transform-modules-commonjs": "^7.25.9",
         "@babel/plugin-transform-runtime": "^7.25.4",
         "@babel/preset-env": "^7.25.4",
         "@babel/runtime-corejs3": "^7.25.6",
-        "prettier": "3.3.3"
+        "prettier": "3.3.3",
+        "webpack": "^5.96.1",
+        "webpack-cli": "^5.1.4"
     },
     "dependencies": {
         "core-js": "^3.38.1",
