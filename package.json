@@ -28,18 +28,17 @@
         "tabWidth": 4
     },
     "devDependencies": {
-        "@babel/cli": "^7.25.6",
-        "@babel/core": "^7.25.2",
+        "@babel/cli": "^7.25.9",
+        "@babel/core": "^7.26.0",
         "@babel/plugin-transform-modules-commonjs": "^7.25.9",
-        "@babel/plugin-transform-runtime": "^7.25.4",
+        "@babel/plugin-transform-runtime": "^7.25.9",
         "@babel/preset-env": "^7.25.4",
-        "@babel/runtime-corejs3": "^7.25.6",
         "prettier": "3.3.3",
         "webpack": "^5.96.1",
         "webpack-cli": "^5.1.4"
     },
     "dependencies": {
-        "core-js": "^3.38.1",
+        "@babel/runtime-corejs3": "^7.26.0",
         "jsonpath": "1.1.1"
     },
     "keywords": [

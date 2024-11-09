@@ -155,7 +155,7 @@ export function mapObj(source, mapping) {
         if (Array.isArray(from)) {
             if (from.length === 0) continue;
             fn = from.at(-1);
-            from = from.toSpliced(-1);
+            from = from.slice(0, -1);
             if (typeof fn !== "function") {
                 throw new Error(
                     "the last element of the 'from' array must be a function",

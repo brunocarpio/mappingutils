@@ -1,3 +1,26 @@
+import _reduceInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/reduce";
+import _flatMapInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/flat-map";
+import _mapInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/map";
+import _flatInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/flat";
+import _Number$isNaN from "@babel/runtime-corejs3/core-js-stable/number/is-nan";
+import _Number$isInteger from "@babel/runtime-corejs3/core-js-stable/number/is-integer";
+import _sliceInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/slice";
+import _lastIndexOfInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/last-index-of";
+import _includesInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/includes";
+import _replaceAllInstanceProperty from "@babel/runtime-corejs3/core-js/instance/replace-all";
+import _concatInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/concat";
+import _Map from "@babel/runtime-corejs3/core-js-stable/map";
+import _Set from "@babel/runtime-corejs3/core-js-stable/set";
+import _Object$entries from "@babel/runtime-corejs3/core-js-stable/object/entries";
+import _Array$isArray from "@babel/runtime-corejs3/core-js-stable/array/is-array";
+import _someInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/some";
+import _sortInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/sort";
+import _filterInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/filter";
+import _Object$keys from "@babel/runtime-corejs3/core-js-stable/object/keys";
+import _valuesInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/values";
+import _Object$assign from "@babel/runtime-corejs3/core-js-stable/object/assign";
+import _entriesInstanceProperty from "@babel/runtime-corejs3/core-js-stable/instance/entries";
+import _Array$from from "@babel/runtime-corejs3/core-js-stable/array/from";
 //@ts-check
 
 import jp from "jsonpath";
@@ -5,7 +28,10 @@ import jp from "jsonpath";
 // Function to compute the cartesian product of input arrays, adapted from Stack Overflow
 // Source: https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
 // Author: rsp
-let cartesian = (...arrays) => arrays.reduce((a, b) => a.flatMap(ae => b.map(be => [ae, be].flat())));
+let cartesian = (...arrays) => _reduceInstanceProperty(arrays).call(arrays, (a, b) => _flatMapInstanceProperty(a).call(a, ae => _mapInstanceProperty(b).call(b, be => {
+  var _context;
+  return _flatInstanceProperty(_context = [ae, be]).call(_context);
+})));
 
 /**
  * Converts a string to a node path
@@ -15,8 +41,9 @@ let cartesian = (...arrays) => arrays.reduce((a, b) => a.flatMap(ae => b.map(be 
  * @returns {(string|number)[]} The converted string to node path
  */
 function strToPath(str) {
-  return str.split(",").map(v => {
-    if (!Number.isNaN(+v)) {
+  var _context2;
+  return _mapInstanceProperty(_context2 = str.split(",")).call(_context2, v => {
+    if (!_Number$isNaN(+v)) {
       return +v;
     }
     return v;
@@ -34,8 +61,8 @@ function strToPath(str) {
 function findParentPath(path, level) {
   let occurrence = 0;
   for (let i = path.length - 1; i > 0; i--) {
-    if (Number.isInteger(path[i])) occurrence++;
-    if (occurrence === level) return path.slice(0, i + 1);
+    if (_Number$isInteger(path[i])) occurrence++;
+    if (occurrence === level) return _sliceInstanceProperty(path).call(path, 0, i + 1);
   }
   return null;
 }
@@ -66,7 +93,7 @@ export function addProp(obj, key, value) {
   obj = structuredClone(obj);
   let nodes = jp.nodes(obj, key);
   if (nodes.length === 0) {
-    let star = key.lastIndexOf("*");
+    let star = _lastIndexOfInstanceProperty(key).call(key, "*");
     if (star > 0) key = key.substring(0, star) + 0 + key.substring(star + 1);
   }
   jp.value(obj, key, value);
@@ -82,15 +109,15 @@ export function addProp(obj, key, value) {
 export function mergeObjArr(objArr, prop) {
   objArr = structuredClone(objArr);
   let firstObj = objArr.shift();
-  if (prop.includes("[]")) {
-    prop = prop.replaceAll("[]", "[*]");
+  if (_includesInstanceProperty(prop).call(prop, "[]")) {
+    prop = _replaceAllInstanceProperty(prop).call(prop, "[]", "[*]");
   }
   let arrToMerge = jp.query(firstObj, prop);
   let to = prop;
   for (let i = 0; i < objArr.length; i++) {
-    arrToMerge = arrToMerge.concat(jp.query(objArr[i], to));
+    arrToMerge = _concatInstanceProperty(arrToMerge).call(arrToMerge, jp.query(objArr[i], to));
   }
-  if (to.slice(-3) === "[*]") to = to.substring(0, to.length - 3);
+  if (_sliceInstanceProperty(to).call(to, -3) === "[*]") to = to.substring(0, to.length - 3);
   return addProp(firstObj, to, arrToMerge);
 }
 
@@ -135,25 +162,26 @@ export function mapObjArr(source, mapping) {
  */
 export function mapObj(source, mapping) {
   let commonProps = {};
-  let indexToObj = new Map();
-  let propsToMerge = new Set();
+  let indexToObj = new _Map();
+  let propsToMerge = new _Set();
   let arrNodes = [];
-  for (let [to, from] of Object.entries(mapping)) {
+  for (let [to, from] of _Object$entries(mapping)) {
+    var _context4;
     if (!from) continue;
-    if (to.includes("[]")) {
-      to = to.replaceAll("[]", "[*]");
-      if (to.slice(-3) !== "[*]") {
-        propsToMerge.add(to.substring(0, to.lastIndexOf("[*]") + 3));
+    if (_includesInstanceProperty(to).call(to, "[]")) {
+      to = _replaceAllInstanceProperty(to).call(to, "[]", "[*]");
+      if (_sliceInstanceProperty(to).call(to, -3) !== "[*]") {
+        propsToMerge.add(to.substring(0, _lastIndexOfInstanceProperty(to).call(to, "[*]") + 3));
       } else {
         propsToMerge.add(to);
       }
     }
     let fn;
     let nodes;
-    if (Array.isArray(from)) {
+    if (_Array$isArray(from)) {
       if (from.length === 0) continue;
       fn = from.at(-1);
-      from = from.toSpliced(-1);
+      from = _sliceInstanceProperty(from).call(from, 0, -1);
       if (typeof fn !== "function") {
         throw new Error("the last element of the 'from' array must be a function");
       }
@@ -163,6 +191,7 @@ export function mapObj(source, mapping) {
       if (from.length === 1) {
         nodes = jp.nodes(source, from.at(0));
       } else {
+        var _context3;
         let cpath = [];
         let cvalues = [];
         for (let fromv of from) {
@@ -176,7 +205,7 @@ export function mapObj(source, mapping) {
           cpath.push(tpath);
           cvalues.push(tvalues);
         }
-        cvalues = cvalues.map(arr => {
+        cvalues = _mapInstanceProperty(cvalues).call(cvalues, arr => {
           if (arr.length === 0) {
             return [undefined];
           } else return arr;
@@ -188,26 +217,26 @@ export function mapObj(source, mapping) {
           let val = fn(...product);
           values.push(val);
         }
-        if (!cpath.flat(2).some(el => Number.isInteger(el))) {
+        if (!_someInstanceProperty(_context3 = _flatInstanceProperty(cpath).call(cpath, 2)).call(_context3, el => _Number$isInteger(el))) {
           for (let value of values) {
             commonProps = addProp(commonProps, to, value);
           }
           continue;
         }
-        let cnodes = values.map((value, i) => {
+        let cnodes = _mapInstanceProperty(values).call(values, (value, i) => {
           return {
             value,
             path: cproductp[i],
             to
           };
         });
-        arrNodes = arrNodes.concat(cnodes);
+        arrNodes = _concatInstanceProperty(arrNodes).call(arrNodes, cnodes);
         continue;
       }
     }
     nodes = nodes ? nodes : jp.nodes(source, from);
     if (nodes.length === 0) continue;
-    if (nodes.length === 1 && !nodes[0].path.some(el => Number.isInteger(el))) {
+    if (nodes.length === 1 && !_someInstanceProperty(_context4 = nodes[0].path).call(_context4, el => _Number$isInteger(el))) {
       let value = nodes[0].value;
       if (fn) value = fn(value);
       commonProps = addProp(commonProps, to, value);
@@ -217,9 +246,9 @@ export function mapObj(source, mapping) {
       node.to = to;
       if (fn) node.value = fn(node.value);
     }
-    arrNodes = arrNodes.concat(nodes);
+    arrNodes = _concatInstanceProperty(arrNodes).call(arrNodes, nodes);
   }
-  arrNodes.sort((a, b) => b.path.length - a.path.length);
+  _sortInstanceProperty(arrNodes).call(arrNodes, (a, b) => b.path.length - a.path.length);
   for (let node of arrNodes) {
     if (node.ignore) continue;
     let key = findParentPath(node.path, 1)?.toString();
@@ -227,7 +256,7 @@ export function mapObj(source, mapping) {
     obj = addProp(obj, node.to, node.value);
     let parentPath = findParentPath(node.path, 2);
     if (parentPath) {
-      let parentNodes = arrNodes.filter(otherNode => includesPath(otherNode.path, parentPath) && otherNode.path.length < node.path.length);
+      let parentNodes = _filterInstanceProperty(arrNodes).call(arrNodes, otherNode => includesPath(otherNode.path, parentPath) && otherNode.path.length < node.path.length);
       if (parentNodes && parentNodes.length > 0) {
         for (let pNode of parentNodes) {
           pNode.ignore = true;
@@ -238,15 +267,16 @@ export function mapObj(source, mapping) {
     indexToObj.set(key, obj);
   }
   if (indexToObj.size === 0) {
-    return Object.keys(commonProps).length > 0 ? [commonProps] : [];
+    return _Object$keys(commonProps).length > 0 ? [commonProps] : [];
   }
-  for (let obj of indexToObj.values()) {
-    Object.assign(obj, commonProps);
+  for (let obj of _valuesInstanceProperty(indexToObj).call(indexToObj)) {
+    _Object$assign(obj, commonProps);
   }
   if (propsToMerge.size > 0) {
-    let indexParentToObjArr = new Map();
-    for (let to of propsToMerge.values()) {
-      for (let [k, v] of indexToObj.entries()) {
+    var _context5;
+    let indexParentToObjArr = new _Map();
+    for (let to of _valuesInstanceProperty(propsToMerge).call(propsToMerge)) {
+      for (let [k, v] of _entriesInstanceProperty(indexToObj).call(indexToObj)) {
         let indexParent = strToPath(k);
         let parentPath = findParentPath(indexParent, 2);
         if (parentPath) {
@@ -258,8 +288,9 @@ export function mapObj(source, mapping) {
         }
       }
     }
-    return Array.from(indexParentToObjArr.values()).flat();
+    return _flatInstanceProperty(_context5 = _Array$from(_valuesInstanceProperty(indexParentToObjArr).call(indexParentToObjArr))).call(_context5);
   } else {
-    return Array.from(indexToObj.values()).flat();
+    var _context6;
+    return _flatInstanceProperty(_context6 = _Array$from(_valuesInstanceProperty(indexToObj).call(indexToObj))).call(_context6);
   }
 }
