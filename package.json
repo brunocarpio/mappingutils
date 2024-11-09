@@ -5,11 +5,10 @@
     "author": "bcarpio181@gmail.com",
     "type": "module",
     "exports": {
-        "node": {
+        ".": {
             "import": "./dist/index.js",
             "require": "./dist/index.cjs"
-        },
-        "default": "./dist/mappingutils.min.js"
+        }
     },
     "files": [
         "dist"

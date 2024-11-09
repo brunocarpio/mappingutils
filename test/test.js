@@ -10,7 +10,7 @@ describe("mapping no nested objects", () => {
             notKey: "some value",
         };
         let mapping = {
-            ["$.otherKey"]: "$.key",
+            "$.otherKey": "$.key",
         };
         let arr = mapObj(source, mapping);
         assert.equal(arr.length, 0);
@@ -24,9 +24,9 @@ describe("mapping no nested objects", () => {
             },
         };
         let mapping = {
-            ["$.otherNumber"]: "$.number",
-            ["$.otherArray"]: "$.array",
-            ["$.otherObject"]: "$.object",
+            "$.otherNumber": "$.number",
+            "$.otherArray": "$.array",
+            "$.otherObject": "$.object",
         };
         let target = {
             otherNumber: 1,
@@ -50,9 +50,9 @@ describe("mapping nested objects", () => {
             },
         };
         let mapping = {
-            ["$.objectWrapper.newObject.newPropOne"]: "$.object.propOne",
-            ["$.objectWrapper.newObject.newPropTwo"]: "$.object.propTwo",
-            ["$.objectWrapper.newObject.newPropThree"]: "$.object.propThree",
+            "$.objectWrapper.newObject.newPropOne": "$.object.propOne",
+            "$.objectWrapper.newObject.newPropTwo": "$.object.propTwo",
+            "$.objectWrapper.newObject.newPropThree": "$.object.propThree",
         };
         let target = {
             objectWrapper: {
@@ -107,7 +107,7 @@ describe("mapping array values in the source object", () => {
     it("should return an empty array when the source object is empty", () => {
         let emptySource = {};
         let mapping = {
-            ["$.item"]: "$.items[0].item",
+            "$.item": "$.items[0].item",
         };
         let arr = mapObj(emptySource, mapping);
         assert.equal(arr.length, 0);
@@ -117,7 +117,7 @@ describe("mapping array values in the source object", () => {
             date: "20240921",
         };
         let mapping = {
-            ["$.missingProperty"]: "$.items[*].nonExistentProperty",
+            "$.missingProperty": "$.items[*].nonExistentProperty",
         };
         let arr = mapObj(missingPropertySource, mapping);
         assert.equal(arr.length, 0);
@@ -137,7 +137,7 @@ describe("mapping array values in the source object", () => {
             ],
         };
         let mapping = {
-            ["$.constraints.availableCountry"]:
+            "$.constraints.availableCountry":
                 "$.items[*].availableCountries[*].country",
         };
         let arr = mapObj(emptyNestedArraySource, mapping);
@@ -149,14 +149,14 @@ describe("mapping array values in the source object", () => {
             items: [],
         };
         let mapping = {
-            ["$.item"]: "$.items[*].item",
+            "$.item": "$.items[*].item",
         };
         let arr = mapObj(emptyItemsSource, mapping);
         assert.equal(arr.length, 0);
     });
     it("should create one object output, no extra property", () => {
         let mapping = {
-            ["$.item"]: "$.items[0].item",
+            "$.item": "$.items[0].item",
         };
         let target = {
             item: 11111,
@@ -167,8 +167,8 @@ describe("mapping array values in the source object", () => {
     });
     it("should create one object output, and an extra non array value", () => {
         let mapping = {
-            ["$.item"]: "$.items[0].item",
-            ["$.date"]: "$.date",
+            "$.item": "$.items[0].item",
+            "$.date": "$.date",
         };
         let target = {
             date: "20240921",
@@ -180,7 +180,7 @@ describe("mapping array values in the source object", () => {
     });
     it("should create three objects one of each item", () => {
         let mapping = {
-            ["$.item"]: "$.items[*].item",
+            "$.item": "$.items[*].item",
         };
         let target = [
             {
@@ -214,7 +214,7 @@ describe("mapping array values in the source object", () => {
             ],
         };
         let mapping = {
-            ["$.constraints.availableCountry"]:
+            "$.constraints.availableCountry":
                 "$.items[*].availableCountries[*].country",
         };
         let target = [
@@ -230,8 +230,8 @@ describe("mapping array values in the source object", () => {
     });
     it("should create two objects and an additional non array field", () => {
         let mapping = {
-            ["$.item"]: "$.items[*].item",
-            ["$.date"]: "$.date",
+            "$.item": "$.items[*].item",
+            "$.date": "$.date",
         };
         let target = [
             {
@@ -252,7 +252,7 @@ describe("mapping array values in the source object", () => {
     });
     it("should create one object for every country value, nested array", () => {
         let mapping = {
-            ["$.constraints.availableCountry"]:
+            "$.constraints.availableCountry":
                 "$.items[*].availableCountries[*].country",
         };
         let target = [
@@ -287,8 +287,8 @@ describe("mapping array values in the source object", () => {
     });
     it("should create one object for every country value and an item value header for each of the five", () => {
         let mapping = {
-            ["$.item"]: "$.items[*].item",
-            ["$.constraints.availableCountry"]:
+            "$.item": "$.items[*].item",
+            "$.constraints.availableCountry":
                 "$.items[*].availableCountries[*].country",
         };
         let target = [
@@ -328,9 +328,9 @@ describe("mapping array values in the source object", () => {
     });
     it("should create one object for every array value and the non repeating value should be present all of them", () => {
         let mapping = {
-            ["$.date"]: "$.date",
-            ["$.item"]: "$.items[*].item",
-            ["$.constraints.availableCountry"]:
+            "$.date": "$.date",
+            "$.item": "$.items[*].item",
+            "$.constraints.availableCountry":
                 "$.items[*].availableCountries[*].country",
         };
         let target = [
@@ -421,7 +421,7 @@ describe("mapping array values in the target object", () => {
             items: [],
         };
         let mapping = {
-            ["$.availableCountries[]"]:
+            "$.availableCountries[]":
                 "$.items[*].availableCountries[*].country",
         };
         let arr = mapObj(emptyItemsSource, mapping);
@@ -429,9 +429,9 @@ describe("mapping array values in the target object", () => {
     });
     it("should aggregate all countries for item", () => {
         let mapping = {
-            ["$.date"]: "$.date",
-            ["$.item"]: "$.items[*].item",
-            ["$.availableCountries[]"]:
+            "$.date": "$.date",
+            "$.item": "$.items[*].item",
+            "$.availableCountries[]":
                 "$.items[*].availableCountries[*].country",
         };
         let target = [
@@ -456,11 +456,11 @@ describe("mapping array values in the target object", () => {
     });
     it("should add properties to objects in the target array", () => {
         let mapping = {
-            ["$.date"]: "$.date",
-            ["$.item"]: "$.items[*].item",
-            ["$.availableCountries[].code"]:
+            "$.date": "$.date",
+            "$.item": "$.items[*].item",
+            "$.availableCountries[].code":
                 "$.items[*].availableCountries[*].country",
-            ["$.availableCountries[].name"]:
+            "$.availableCountries[].name":
                 "$.items[*].availableCountries[*].countryName",
         };
         let target = [
@@ -525,9 +525,9 @@ describe("mapping array values in the target object", () => {
             ],
         };
         let mapping = {
-            ["$.date"]: "$.date",
-            ["$.item"]: "$.items[*].item",
-            ["$.availableCountries[]"]:
+            "$.date": "$.date",
+            "$.item": "$.items[*].item",
+            "$.availableCountries[]":
                 "$.items[*].availableCountries[*].country",
         };
         let target = [
@@ -566,11 +566,11 @@ describe("mapping array values in the target object", () => {
             ],
         };
         let mapping = {
-            ["$.date"]: "$.date",
-            ["$.item"]: "$.items[*].item",
-            ["$.availableCountries[].code"]:
+            "$.date": "$.date",
+            "$.item": "$.items[*].item",
+            "$.availableCountries[].code":
                 "$.items[*].availableCountries[*].country",
-            ["$.availableCountries[].name"]:
+            "$.availableCountries[].name":
                 "$.items[*].availableCountries[*].countryName",
         };
         let target = [
@@ -631,7 +631,7 @@ describe("mapping with filters in the source", () => {
     source = JSON.parse(source);
     it("should filter only the reference category book", () => {
         let mapping = {
-            ["$.categories"]: '$.store.book[?(@.category=="reference")]',
+            "$.categories": '$.store.book[?(@.category=="reference")]',
         };
         let target = [
             {
@@ -648,9 +648,9 @@ describe("mapping with filters in the source", () => {
     });
     it("should filter only the fiction category books", () => {
         let mapping = {
-            ["$.store"]: "$.storeNumber",
-            ["$.book.author"]: '$.store.book[?(@.category=="fiction")].author',
-            ["$.book.title"]: '$.store.book[?(@.category=="fiction")].title',
+            "$.store": "$.storeNumber",
+            "$.book.author": '$.store.book[?(@.category=="fiction")].author',
+            "$.book.title": '$.store.book[?(@.category=="fiction")].title',
         };
         let target = [
             {
@@ -718,11 +718,11 @@ describe("mapping with functions", () => {
     source = JSON.parse(source);
     it("should apply uppercase to the authors and trim the title names", () => {
         let mapping = {
-            ["$.book.author"]: [
+            "$.book.author": [
                 '$.store.book[?(@.category=="reference")].author',
                 (author) => author.toUpperCase(),
             ],
-            ["$.book.title"]: [
+            "$.book.title": [
                 '$.store.book[?(@.category=="reference")].title',
                 (title) => title.trim(),
             ],
@@ -750,7 +750,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.agent"]: [
+            "$.agent": [
                 "$.event.data.name",
                 "$.event.data.lastName",
                 (a, b) => `${a} ${b}`,
@@ -768,7 +768,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.agent"]: [
+            "$.agent": [
                 "$.event.data.name",
                 "$.event.data.lastName",
                 (a, b) => `${a} ${b}`,
@@ -787,7 +787,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.agent"]: ["$.event.data.name", "$.event.data.lastName"],
+            "$.agent": ["$.event.data.name", "$.event.data.lastName"],
         };
         assert.throws(() => mapObj(source, mapping), {
             name: "Error",
@@ -805,8 +805,8 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.agency"]: "$.event.agency",
-            ["$.agent"]: [
+            "$.agency": "$.event.agency",
+            "$.agent": [
                 "$.event.data.name",
                 "$.event.data.lastName",
                 (a, b) => `${a} ${b}`,
@@ -829,7 +829,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.summary"]: [
+            "$.summary": [
                 "$.person.name",
                 "$.person.lastName",
                 "$.person.details.birthDate",
@@ -855,7 +855,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.fullName"]: [
+            "$.fullName": [
                 "$.user.name",
                 "$.user.lastName",
                 (firstName, lastName) => {
@@ -881,7 +881,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.summary"]: [
+            "$.summary": [
                 "$.event.details.type",
                 "$.event.details.year",
                 (type, year) => {
@@ -903,7 +903,7 @@ describe("mapping with multiple from values", () => {
             },
         };
         let mapping = {
-            ["$.finalPrice"]: [
+            "$.finalPrice": [
                 "$.order.item.price",
                 "$.order.discount",
                 (price, discount) => {
