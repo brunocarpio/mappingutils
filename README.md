@@ -5,7 +5,7 @@ Lightweight JSON transformation utility.
 ## Table of Contents
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Quick start](#quick-start)
+- [Setup](#setup)
 - [Basic Usage](#basic-usage)
 - [Use Cases](#use-cases)
 - [Functions](#functions)
@@ -14,26 +14,56 @@ Lightweight JSON transformation utility.
   - [mapObj(source, mappings)](#mapobjsource-mappings)
   - [mapObjArr(source, mappings)](#mapobjarrsource-mappings)
 - [Running Tests](#running-tests)
-- [Changelog](#changelog)
 - [Issue Reporting](#issue-reporting)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Prerequisites
-- Node.js v18 or higher
+If using Node.js ensure your version is v18 or higher.
 
 ## Installation
 You can install mappingutils directly from npm:
-- `npm install mappingutils`
+`npm install mappingutils`
 
-Ensure that you are using Node.js version 18 or higher. You can check your Node version with the following command:
-- `node -v`
-
-## Quick start
+## Setup
 **Node.js**
 
+**cjs**
+```javascript
+let { mapObj } = require("mappingutils");
+...
+```
+
+**esm**
 ```javascript
 import { mapObj } from "mappingutils";
+...
+```
+
+**Browser**
+
+**esm (bundlers)**
+If you're using a bundler (e.g Vite), you could use the ESM import statement.
+```javascript
+import { mapObj } from "mappingutils";
+...
+```
+
+**cdn**
+Or you could use cdn for importing the minified version of the package.
+```javascript
+<script src="https://cdn.jsdelivr.net/npm/mappingutils@latest/dist/index.min.js"></script>
+<script>
+ ...
+</script>
+```
+
+
+## Basic Usage
+It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) syntax for selecting the values from the input and a similar syntax for the output.
+
+```javascript
+let { mapObj } = require("mappingutils");
 
 let source = {
   event: {
@@ -47,9 +77,9 @@ let source = {
 };
 
 let mapping = {
-  ["$.code"]: "$.event.data.id",
-  ["$.private.agency"]: "$.event.agency",
-  ["$.private.agent"]: [
+  "$.code": "$.event.data.id",
+  "$.private.agency": "$.event.agency",
+  "$.private.agent": [
       "$.event.data.name",
       "$.event.data.lname",
       (a, b) => `${a} ${b}`.toUpperCase(),
@@ -70,51 +100,6 @@ It will print out
       agent: "JAMES BOND",
     }
   }
-]
-```
-
-## Basic Usage
-It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) syntax for selecting the values from the input and a similar syntax for the output.
-
-After installing the library, you can import the functions and start using them in your JavaScript or TypeScript projects:
-
-```javascript
-import { mapObj } from "mappingutils";
-
-// Your source object
-let source = {
-  store: {
-    book: [
-      {
-        category: "fiction",
-        author: "J.R.R. Tolkien",
-        title: "The Hobbit",
-      },
-      {
-        category: "reference",
-        author: "Nigel Rees",
-        title: "Sayings of the Century",
-      },
-    ],
-  },
-};
-
-// Your mapping
-let mapping = {
-  ["$.category"]: "$.store.book[*].category",
-  ["$.book.title"]: "$.store.book[*].title",
-};
-
-// Apply the transformation
-let output = mapObj(source, mapping);
-console.log(output);
-```
-
-Prints out
-```javascript
-[
-  { category: 'fiction', book: { title: 'The Hobbit' } },
-  { category: 'reference', book: { title: 'Sayings of the Century' } }
 ]
 ```
 
@@ -164,9 +149,9 @@ Merges the `prop` array values of the object `objArr`. Returns a deep copy of th
 import { mergeObjArr } from "mappingutils";
 
 let objArr = [
-  { id: 1, items: ["apple", "banana"] },
-  { id: 2, items: ["orange"] },
-  { id: 3, items: ["grape", "pear"] },
+  { tx_number: 1111, tx_date: "2024-10-26", items: [{ item: "9991" }] },
+  { tx_number: 1112, tx_date: "2024-10-26", items: [{ item: "9992" }, { item: "9993" }], },
+  { tx_number: 1113, tx_date: "2024-10-26", items: [{ item: "9994" }] },
 ];
 
 let prop = "$.items[]";
@@ -178,8 +163,14 @@ Prints out
 
 ```javascript
 {
-  id: 1,
-  items: ["apple", "banana", "orange", "grape", "pear"]
+  tx_number: 1111,
+  tx_date: '2024-10-26',
+  items: [
+    { item: '9991' },
+    { item: '9992' },
+    { item: '9993' },
+    { item: '9994' }
+  ]
 }
 ```
 
@@ -201,43 +192,55 @@ Returns an array of transformed objects, with fields derived from applying the `
 import { mapObj } from "mappingutils";
 
 let source = {
-    event: {
-        agency: "MI6",
-        data: {
-            name: "James",
-            lastName: "Bond",
-            id: "007",
-        },
-        location: {
-            country: "UK",
-            city: "London",
-        },
+  event: {
+    agency: "MI6",
+    data: {
+      name: "James",
+      lastName: "Bond",
+      id: "007",
     },
-    attendees: [
-        { name: "M", role: "Director" },
-        { name: "Q", role: "Tech Expert" },
-    ],
+    location: {
+      country: "UK",
+      city: "London",
+    },
+  },
+  attendees: [
+    { name: "M", role: "Director" },
+    { name: "Q", role: "Tech Expert" },
+  ],
 };
 
 let mapping = {
-    ["$.agency"]: "$.event.agency",
-    ["$.agent"]: [
-        "$.event.data.name",
-        "$.event.data.lastName",
-        (name, lastName) => `${name} ${lastName}`,
-    ],
-    ["$.city"]: ["$.event.location.city", (city) => `${city}`.toUpperCase()],
-    ["$.director"]: "$.attendees[?(@.role == 'Director')].name",
+  "$.agency": "$.event.agency",
+  "$.location": [
+    "$.event.location.city",
+    "$.event.location.country",
+    (a, b) => a.toUpperCase() + "/" + b,
+  ],
+  "$.attendees": "$.attendees",
 };
 
 let output = mapObj(source, mapping);
-console.log(output);
+console.log(JSON.stringify(output, null, 2));
 ```
 Prints out
 
-```javascript
+```
 [
-  { director: 'M', agency: 'MI6', agent: 'James Bond', city: 'LONDON' }
+  {
+    "agency": "MI6",
+    "location": "LONDON/UK",
+    "attendees": [
+      {
+        "name": "M",
+        "role": "Director"
+      },
+      {
+        "name": "Q",
+        "role": "Tech Expert"
+      }
+    ]
+  }
 ]
 ```
 
@@ -251,13 +254,23 @@ The mapping object should follow the same conventions as in the `mapObj` functio
 import { mapObjArr } from "mappingutils";
 
 let source = [
-  { id: 1, name: "Alice", score: 90 },
-  { id: 2, name: "Bob", score: 80 },
+  {
+    id: 1,
+    name: "Alice",
+    score: 90,
+    extra_curricular_activities: ["Trivia and Quiz"],
+  },
+  {
+    id: 2,
+    name: "Bob",
+    score: 80,
+    extra_curricular_activities: ["Robotics Club"],
+  },
 ];
 
 let mapping = {
-  ["$.fname"]: "$.name",
-  ["$.grade"]: ["$.score", (score) => (score >= 85 ? "A" : "B")],
+  "$.name": "$.name",
+  "$.grade": ["$.score", (score) => (score >= 85 ? "A" : "B")],
 };
 
 let outputArr = mapObjArr(source, mapping);
@@ -282,47 +295,6 @@ Prints out
 To ensure that your changes are working as expected, you can run the test suite:
 - npm run test
 Make sure all tests pass before submitting a pull request.
-
-## Changelog
-
-### [0.1.0] - 2024-09-30
-- Initial release of mappingutils.
-- Added functions: addProp, mergeObjArr, mapObj, mapObjArr.
-- Included examples for each function in the README.
-- License added.
-
-### [0.2.0] - 2024-10-01
-- Improved the functions in the index.
-- Added configuration for Babel.
-- Updated the README.
-
-### [0.3.0] - 2024-10-02
-- Fixed a bug that occurred when node groups were not consecutive.
-- Added the ability to apply a function to the value.
-- Updated JSDoc documentation.
-- Added test cases for the apply function feature.
-- Updated the README and tests.
-
-### [0.3.1] - [0.3.5] - 2024-10-06
-- Added explicit comparison to undefined.
-- Fixed handling of empty arrays in the source.
-- Removed unnecessary addition of $.
-- Adjusted value index to be the minimum between i and v.length - 1.
-- Fixed an issue where the function modified the input object.
-- Adjusted value index to be the minimum between i and v.length.
-- Updated the README.
-
-### [0.3.6] - [0.3.8] - 2024-10-11
-- Fixed handling of missing properties in array elements.
-- Used a for...of loop for iteration.
-- Reduced package size.
-- Updated the README.
-
-### [0.3.8] - [0.4.0] - 2024-10-20
-- Add feature, mapping with array of `from` values.
-- Update the README.
-
-_Note: Future updates will follow semantic versioning._
 
 ## Issue Reporting
 
