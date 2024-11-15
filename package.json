@@ -1,16 +1,18 @@
 {
     "name": "mappingutils",
     "description": "Lightweight JSON transformation utility.",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "author": "bcarpio181@gmail.com",
     "type": "module",
+    "types": "index.d.ts",
     "engines": {
-        "node": ">18"
+        "node": ">=18"
     },
     "main": "src/index.js",
     "module": "src/index.js",
     "files": [
-        "src"
+        "src",
+        "*.d.ts"
     ],
     "scripts": {
         "test": "node --test",
