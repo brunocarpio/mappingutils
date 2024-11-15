@@ -3,7 +3,6 @@
 Lightweight JSON transformation utility.
 
 ## Table of Contents
-- [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Setup](#setup)
 - [Basic Usage](#basic-usage)
@@ -18,11 +17,8 @@ Lightweight JSON transformation utility.
 - [Contributing](#contributing)
 - [License](#license)
 
-## Prerequisites
-If using Node.js ensure your version is v18 or higher.
-
 ## Installation
-You can install mappingutils directly from npm:
+
 `npm install mappingutils`
 
 ## Setup
@@ -43,21 +39,12 @@ import { mapObj } from "mappingutils";
 **Browser**
 
 **esm (bundlers)**
+
 If you're using a bundler (e.g Vite), you could use the ESM import statement.
 ```javascript
 import { mapObj } from "mappingutils";
 ...
 ```
-
-**cdn**
-Or you could use cdn for importing the minified version of the package.
-```javascript
-<script src="https://cdn.jsdelivr.net/npm/mappingutils@latest/dist/index.min.js"></script>
-<script>
- ...
-</script>
-```
-
 
 ## Basic Usage
 It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) syntax for selecting the values from the input and a similar syntax for the output.
@@ -293,7 +280,9 @@ Prints out
 
 ## Running Tests
 To ensure that your changes are working as expected, you can run the test suite:
-- npm run test
+
+`npm run test`
+
 Make sure all tests pass before submitting a pull request.
 
 ## Issue Reporting
