@@ -4,49 +4,26 @@
     "version": "2.0.2",
     "author": "bcarpio181@gmail.com",
     "type": "module",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
-        }
+    "engines": {
+        "node": ">18"
     },
+    "main": "src/index.js",
+    "module": "src/index.js",
     "files": [
-        "dist"
+        "src"
     ],
-    "directories": {
-        "test": "test"
-    },
     "scripts": {
-        "build:cjs": "BABEL_ENV=cjs babel index.js --out-file dist/index.cjs",
-        "build:esm": "babel index.js --out-file dist/index.js",
-        "build:browser": "webpack",
-        "build": "npm run build:cjs && npm run build:esm && npm run build:browser",
         "test": "node --test",
         "debug": "npm test -- --inspect-brk"
     },
-    "prettier": {
-        "tabWidth": 4
-    },
-    "devDependencies": {
-        "@babel/cli": "^7.25.9",
-        "@babel/core": "^7.26.0",
-        "@babel/plugin-transform-modules-commonjs": "^7.25.9",
-        "@babel/plugin-transform-runtime": "^7.25.9",
-        "@babel/preset-env": "^7.25.4",
-        "prettier": "3.3.3",
-        "webpack": "^5.96.1",
-        "webpack-cli": "^5.1.4"
-    },
     "dependencies": {
-        "@babel/runtime-corejs3": "^7.26.0",
         "jsonpath": "1.1.1"
     },
     "keywords": [
         "mappingutils",
-        "mapping-utils",
         "mapping",
         "transformation",
-        "data transformation",
+        "data-transformation",
         "json"
     ],
     "repository": {

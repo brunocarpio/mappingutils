@@ -1,7 +1,7 @@
 //@ts-check
 
 import assert from "node:assert/strict";
-import { mapObj } from "../index.js";
+import { mapObj } from "../src/index.js";
 import { describe, it } from "node:test";
 
 describe("mapping no nested objects", () => {

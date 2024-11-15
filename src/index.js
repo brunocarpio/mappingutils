@@ -158,12 +158,12 @@ export function mapObj(source, mapping) {
             from = from.slice(0, -1);
             if (typeof fn !== "function") {
                 throw new Error(
-                    "the last element of the 'from' array must be a function",
+                    "the last element of the 'from' array must be a function"
                 );
             }
             if (from.length === 0) {
                 throw new Error(
-                    "there should be at least one more element than the function in the 'from' array",
+                    "there should be at least one more element than the function in the 'from' array"
                 );
             }
             if (from.length === 1) {
@@ -239,7 +239,7 @@ export function mapObj(source, mapping) {
             let parentNodes = arrNodes.filter(
                 (otherNode) =>
                     includesPath(otherNode.path, parentPath) &&
-                    otherNode.path.length < node.path.length,
+                    otherNode.path.length < node.path.length
             );
             if (parentNodes && parentNodes.length > 0) {
                 for (let pNode of parentNodes) {
