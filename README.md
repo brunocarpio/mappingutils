@@ -4,16 +4,15 @@ Lightweight JSON transformation utility.
 
 ## Table of Contents
 - [Installation](#installation)
-- [Setup](#setup)
-- [Basic Usage](#basic-usage)
-- [Use Cases](#use-cases)
+- [Basic usage](#basic-usage)
+- [Use cases](#use-cases)
 - [Functions](#functions)
   - [addProp(obj, key, value)](#addpropobj-key-value)
   - [mergeObjArr(objArr, prop)](#mergeobjarrobjarr-prop)
   - [mapObj(source, mappings)](#mapobjsource-mappings)
   - [mapObjArr(source, mappings)](#mapobjarrsource-mappings)
-- [Running Tests](#running-tests)
-- [Issue Reporting](#issue-reporting)
+- [Running tests](#running-tests)
+- [Issue reporting](#issue-reporting)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -21,36 +20,12 @@ Lightweight JSON transformation utility.
 
 `npm install mappingutils`
 
-## Setup
-**Node.js**
+## Basic usage
+This package uses JSONPath to query the values from the input objects and to set the values on the target objects.
+Check out [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) for more details on the syntax.
 
-**cjs**
-```javascript
-let { mapObj } = require("mappingutils");
-...
-```
-
-**esm**
 ```javascript
 import { mapObj } from "mappingutils";
-...
-```
-
-**Browser**
-
-**esm (bundlers)**
-
-If you're using a bundler (e.g Vite), you could use the ESM import statement.
-```javascript
-import { mapObj } from "mappingutils";
-...
-```
-
-## Basic Usage
-It uses [JSONPath](https://www.npmjs.com/package/jsonpath#jsonpath-syntax) syntax for selecting the values from the input and a similar syntax for the output.
-
-```javascript
-let { mapObj } = require("mappingutils");
 
 let source = {
   event: {
@@ -77,7 +52,6 @@ let output = mapObj(source, mapping);
 console.log(output);
 ```
 
-It will print out
 ```javascript
 [
   {
@@ -90,7 +64,7 @@ It will print out
 ]
 ```
 
-## Use Cases
+## Use cases
 Here are some practical scenarios where mappingutils can be useful:
 
 * API Data Transformation: Easily map and structure incoming JSON data from external APIs into a desired format for internal use.
@@ -115,7 +89,6 @@ let obj = {
 let updatedObj = addProp(obj, "$.address.city", "Wonderland");
 console.log(updatedObj);
 ```
-Prints out
 
 ```javascript
 {
@@ -141,12 +114,9 @@ let objArr = [
   { tx_number: 1113, tx_date: "2024-10-26", items: [{ item: "9994" }] },
 ];
 
-let prop = "$.items[]";
-
-let mergedObj = mergeObjArr(objArr, prop);
+let mergedObj = mergeObjArr(objArr, "$.items[]");
 console.log(mergedObj);
 ```
-Prints out
 
 ```javascript
 {
@@ -176,58 +146,51 @@ Returns an array of transformed objects, with fields derived from applying the `
 
 - Example: 
 ```javascript
-import { mapObj } from "mappingutils";
+import { mapObj } from "./src/index.js";
 
 let source = {
-  event: {
-    agency: "MI6",
-    data: {
-      name: "James",
-      lastName: "Bond",
-      id: "007",
+    event: {
+        name: "Bond Movies",
+        movies: [
+            {
+                name: "Licence to Kill",
+                star: "Timothy Dalton",
+                rating: 6.6,
+            },
+            {
+                name: "GoldenEye",
+                star: "Pierce Brosnan",
+                rating: 7.2,
+            },
+            {
+                name: "Tomorrow Never Dies",
+                star: "Pierce Brosnan",
+                rating: 6.5,
+            },
+            {
+                name: "Skyfall",
+                star: "Daniel Craig",
+                rating: 7.8,
+            },
+        ],
     },
-    location: {
-      country: "UK",
-      city: "London",
-    },
-  },
-  attendees: [
-    { name: "M", role: "Director" },
-    { name: "Q", role: "Tech Expert" },
-  ],
 };
 
 let mapping = {
-  "$.agency": "$.event.agency",
-  "$.location": [
-    "$.event.location.city",
-    "$.event.location.country",
-    (a, b) => a.toUpperCase() + "/" + b,
-  ],
-  "$.attendees": "$.attendees",
+    "$.movie.title": "$.event.movies[*].name",
+    "$.movie.rating": "$.event.movies[*].rating",
 };
 
 let output = mapObj(source, mapping);
-console.log(JSON.stringify(output, null, 2));
+console.log(output);
 ```
-Prints out
 
 ```
 [
-  {
-    "agency": "MI6",
-    "location": "LONDON/UK",
-    "attendees": [
-      {
-        "name": "M",
-        "role": "Director"
-      },
-      {
-        "name": "Q",
-        "role": "Tech Expert"
-      }
-    ]
-  }
+  { movie: { title: 'Licence to Kill', rating: 6.6 } },
+  { movie: { title: 'GoldenEye', rating: 7.2 } },
+  { movie: { title: 'Tomorrow Never Dies', rating: 6.5 } },
+  { movie: { title: 'Skyfall', rating: 7.8 } }
 ]
 ```
 
@@ -263,7 +226,6 @@ let mapping = {
 let outputArr = mapObjArr(source, mapping);
 console.log(JSON.stringify(outputArr, null, 2));
 ```
-Prints out
 
 ```javascript
 [
@@ -278,14 +240,14 @@ Prints out
 ]
 ```
 
-## Running Tests
+## Running tests
 To ensure that your changes are working as expected, you can run the test suite:
 
 `npm run test`
 
 Make sure all tests pass before submitting a pull request.
 
-## Issue Reporting
+## Issue reporting
 
 If you encounter any issues or have suggestions for improvements, please open an issue in the GitHub repository. To help us address your concerns more effectively, please use the following template:
 
