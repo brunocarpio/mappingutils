@@ -678,6 +678,110 @@ describe("mapping with filters in the source", () => {
         let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
+    it("should filter the first book", () => {
+        let mapping = {
+            "$.store": "$.storeNumber",
+            "$.book.author": "$.store.book[0].author",
+            "$.book.title": "$.store.book[0].title",
+        };
+        let target = [
+            {
+                store: "098",
+                book: {
+                    author: "Nigel Rees",
+                    title: "Sayings of the Century",
+                },
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
+    it("should filter the last book", () => {
+        let mapping = {
+            "$.store": "$.storeNumber",
+            "$.book.author": "$.store.book[(@.length-1)].author",
+            "$.book.title": "$.store.book[(@.length-1)].title",
+        };
+        let target = [
+            {
+                store: "098",
+                book: {
+                    author: "J. R. R. Tolkien",
+                    title: "The Lord of the Rings",
+                },
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
+    it("should filter the first two books via subscript union", () => {
+        let mapping = {
+            "$.store": "$.storeNumber",
+            "$.book.author": "$.store.book[0,1].author",
+            "$.book.title": "$.store.book[0,1].title",
+        };
+        let target = [
+            {
+                store: "098",
+                book: {
+                    author: "Nigel Rees",
+                    title: "Sayings of the Century",
+                },
+            },
+            {
+                store: "098",
+                book: {
+                    author: "Evelyn Waugh",
+                    title: "Sword of Honour",
+                },
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
+    it("should filter the last book via slice", () => {
+        let mapping = {
+            "$.store": "$.storeNumber",
+            "$.book.author": "$.store.book[-1:].author",
+            "$.book.title": "$.store.book[-1:].title",
+        };
+        let target = [
+            {
+                store: "098",
+                book: {
+                    author: "J. R. R. Tolkien",
+                    title: "The Lord of the Rings",
+                },
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
+    it("should filter the first two books via subscript array slice", () => {
+        let mapping = {
+            "$.store": "$.storeNumber",
+            "$.book.author": "$.store.book[:2].author",
+            "$.book.title": "$.store.book[:2].title",
+        };
+        let target = [
+            {
+                store: "098",
+                book: {
+                    author: "Nigel Rees",
+                    title: "Sayings of the Century",
+                },
+            },
+            {
+                store: "098",
+                book: {
+                    author: "Evelyn Waugh",
+                    title: "Sword of Honour",
+                },
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
 });
 describe("mapping with functions", () => {
     let source = `

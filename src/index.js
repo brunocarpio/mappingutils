@@ -5,8 +5,12 @@ import jp from "jsonpath";
 // Function to compute the cartesian product of input arrays, adapted from Stack Overflow
 // Source: https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
 // Author: rsp
-let cartesian = (...arrays) =>
-    arrays.reduce((a, b) => a.flatMap((ae) => b.map((be) => [ae, be].flat())));
+/**
+ * @param {object[][]} pairs
+ * @returns {object[][]}
+ */
+let cartesian = (...pairs) =>
+    pairs.reduce((a, b) => a.flatMap((ae) => b.map((be) => [ae, be].flat())));
 
 /**
  * Converts a string to a node path
@@ -213,10 +217,14 @@ export function mapObj(source, mapping) {
         }
         nodes = nodes ? nodes : jp.nodes(source, from);
         if (nodes.length === 0) continue;
-        if (
-            nodes.length === 1 &&
-            !nodes[0].path.some((el) => Number.isInteger(el))
-        ) {
+        let lastNumberIndex = nodes[0].path.findLastIndex((n) =>
+            Number.isInteger(n)
+        );
+        let isNotCommonProp =
+            lastNumberIndex !== nodes[0].path.length - 1 &&
+            (nodes.length > 1 ||
+                nodes[0].path.filter((n) => Number.isInteger(n)).length > 1);
+        if (!isNotCommonProp) {
             let value = nodes[0].value;
             if (fn) value = fn(value);
             commonProps = addProp(commonProps, to, value);
