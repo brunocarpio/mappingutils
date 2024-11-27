@@ -126,6 +126,32 @@ export function mapObjArr(source, mapping) {
 }
 
 /**
+ * @param {string} to
+ * @returns {boolean}
+ */
+function keyHasValidBrackets(to) {
+    if (to.includes("[") && to.at(to.indexOf("[") + 1) !== "]") {
+        throw new Error("Expecting closing ']' after '['");
+    }
+    if (to.includes("]") && to.at(to.indexOf("]") - 1) !== "[") {
+        throw new Error("Expecting openning '[' before ']'");
+    }
+    let next = to.indexOf("]") + 1;
+    if (next > 0 && next < to.length)
+        return keyHasValidBrackets(to.substring(next));
+    else return true;
+}
+
+/**
+ * @param {string} to
+ * @returns {boolean}
+ */
+function keyIncludesBrackets(to) {
+    if (to.includes("[") || to.includes("]")) return true;
+    else return false;
+}
+
+/**
  * Transforms the `source` object  based on the provided `mapping` transformation.
  *
  * @param {object} source - A source object to transform.
@@ -146,7 +172,7 @@ export function mapObj(source, mapping) {
     let arrNodes = [];
     for (let [to, from] of Object.entries(mapping)) {
         if (!from) continue;
-        if (to.includes("[]")) {
+        if (keyIncludesBrackets(to) && keyHasValidBrackets(to)) {
             to = to.replaceAll("[]", "[*]");
             if (to.slice(-3) !== "[*]") {
                 propsToMerge.add(to.substring(0, to.lastIndexOf("[*]") + 3));
