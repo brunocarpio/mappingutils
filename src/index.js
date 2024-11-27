@@ -87,6 +87,51 @@ function keyIncludesBrackets(to) {
 }
 
 /**
+ * @param {object[]} from
+ * @returns {boolean}
+ */
+function isValidValueArray(from) {
+    if (from.length === 1 || from.length === 0) {
+        throw new Error(
+            "the array should contain at least one argument and the function"
+        );
+    }
+    /** @type {function} */
+    let fn = from.at(-1);
+    if (typeof fn !== "function") {
+        throw new Error("the last element of the array must be a function");
+    }
+    if (fn.length !== from.length - 1) {
+        throw new Error(
+            "the number of arguments should match with the number of arguments in the function"
+        );
+    }
+    return true;
+}
+
+/**
+ * @param {function} fn
+ * @param {string[]} args
+ */
+function computeValueArrayFunction(fn, ...args) {
+    let clean = args.map((arg) => {
+        if (!arg) {
+            return "";
+        } else {
+            return arg;
+        }
+    });
+    let computed = fn(...clean);
+    if (typeof computed === "function") {
+        throw new Error("the function cannot return a function type value");
+    }
+    if (typeof computed === "undefined") {
+        return "";
+    }
+    return computed;
+}
+
+/**
  * Add a `key` property to the object `obj` with the value `value`.
  * @param {object} obj - The input object.
  * @param {string} key - The path in the resulting object to set the value.
@@ -185,19 +230,9 @@ export function mapObj(source, mapping) {
         let fn;
         let nodes;
         if (Array.isArray(from)) {
-            if (from.length === 0) continue;
+            isValidValueArray(from);
             fn = from.at(-1);
             from = from.slice(0, -1);
-            if (typeof fn !== "function") {
-                throw new Error(
-                    "the last element of the 'from' array must be a function"
-                );
-            }
-            if (from.length === 0) {
-                throw new Error(
-                    "there should be at least one more element than the function in the 'from' array"
-                );
-            }
             if (from.length === 1) {
                 nodes = jp.nodes(source, from.at(0));
             } else {
@@ -223,7 +258,7 @@ export function mapObj(source, mapping) {
                 let cproductp = cartesian(...cpath);
                 let values = [];
                 for (let product of cproductv) {
-                    let val = fn(...product);
+                    let val = computeValueArrayFunction(fn, ...product);
                     values.push(val);
                 }
                 if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
@@ -254,13 +289,13 @@ export function mapObj(source, mapping) {
                 nodes[0].path.filter((n) => Number.isInteger(n)).length > 1);
         if (!isNotCommonProp) {
             let value = nodes[0].value;
-            if (fn) value = fn(value);
+            if (fn) value = computeValueArrayFunction(fn, value);
             commonProps = addProp(commonProps, to, value);
             continue;
         }
         for (let node of nodes) {
             node.to = to;
-            if (fn) node.value = fn(node.value);
+            if (fn) node.value = computeValueArrayFunction(fn, ...node.value);
         }
         arrNodes = arrNodes.concat(nodes);
     }

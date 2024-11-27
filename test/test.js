@@ -879,7 +879,7 @@ describe("mapping with multiple from values", () => {
             ],
         };
         let output = mapObj(source, mapping);
-        assert.deepStrictEqual(output, [{ agent: "undefined Bond" }]);
+        assert.deepStrictEqual(output, [{ agent: " Bond" }]);
     });
     it("should throw error when fn is missing for array from", () => {
         let source = {
@@ -895,7 +895,7 @@ describe("mapping with multiple from values", () => {
         };
         assert.throws(() => mapObj(source, mapping), {
             name: "Error",
-            message: /the last element of the 'from' array must be a function/,
+            message: /the last element of the array must be a function/,
         });
     });
     it("should handle multiple mappings in a single mapping", () => {
@@ -993,8 +993,13 @@ describe("mapping with multiple from values", () => {
                 },
             ],
         };
+        let target = [
+            {
+                summary: "",
+            },
+        ];
         let output = mapObj(source, mapping);
-        assert.deepStrictEqual(output, [{ summary: undefined }]);
+        assert.deepStrictEqual(output, target);
     });
     it("should handle complex function that uses intermediate values from object", () => {
         let source = {
