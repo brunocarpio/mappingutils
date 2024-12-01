@@ -132,6 +132,55 @@ function computeValueArrayFunction(fn, ...args) {
 }
 
 /**
+ * Checks if the from value a JSON allowed value
+ * string, number, object, array, boolean, null
+ * @param {*} from
+ * @returns {boolean}
+ */
+function isFromValueDefault(from) {
+    let isValidString = (str) =>
+        typeof str === "string" && !str.startsWith("$.");
+    let isValidArray = (arr) =>
+        Array.isArray(arr) &&
+        (arr.length === 0 ||
+            typeof arr.at(0) !== "string" ||
+            isValidString(arr.at(0)));
+    return (
+        typeof from === "number" ||
+        (typeof from === "object" && !Array.isArray(from) && from !== null) ||
+        typeof from === "boolean" ||
+        from === null ||
+        isValidString(from) ||
+        isValidArray(from)
+    );
+}
+
+/**
+ * @param {object[]} nodes
+ * @returns {boolean}
+ */
+function isCommonProp(nodes) {
+    let lastNumberIndex = nodes[0].path.findLastIndex((n) =>
+        Number.isInteger(n)
+    );
+    return !(
+        lastNumberIndex !== nodes[0].path.length - 1 &&
+        (nodes.length > 1 ||
+            nodes[0].path.filter((n) => Number.isInteger(n)).length > 1)
+    );
+}
+
+/**
+ * @param {*} from
+ * @returns {boolean}
+ */
+function isSingleFromValue(from) {
+    return (
+        typeof from === "string" || (Array.isArray(from) && from.length === 2)
+    );
+}
+
+/**
  * Add a `key` property to the object `obj` with the value `value`.
  * @param {object} obj - The input object.
  * @param {string} key - The path in the resulting object to set the value.
@@ -219,7 +268,7 @@ export function mapObj(source, mapping) {
     let propsToMerge = new Set();
     let arrNodes = [];
     for (let [to, from] of Object.entries(mapping)) {
-        if (!from) continue;
+        if (from === undefined) continue;
         if (keyIncludesBrackets(to) && keyHasValidBrackets(to)) {
             if (to.slice(-2) !== "[]") {
                 propsToMerge.add(to.substring(0, to.lastIndexOf("[]") + 2));
@@ -227,77 +276,85 @@ export function mapObj(source, mapping) {
                 propsToMerge.add(to);
             }
         }
-        let fn;
-        let nodes;
-        if (Array.isArray(from)) {
+        if (isFromValueDefault(from)) {
+            commonProps = addProp(
+                commonProps,
+                to,
+                JSON.parse(JSON.stringify(from))
+            );
+            continue;
+        }
+        if (isSingleFromValue(from)) {
+            let fn;
+            let nodes;
+            if (Array.isArray(from)) {
+                isValidValueArray(from);
+                fn = from.at(-1);
+                nodes = jp.nodes(source, from.at(0));
+            } else {
+                nodes = jp.nodes(source, from);
+            }
+            if (nodes.length === 0) continue;
+            if (isCommonProp(nodes)) {
+                let value = nodes[0].value;
+                if (fn) value = computeValueArrayFunction(fn, value);
+                commonProps = addProp(commonProps, to, value);
+            } else {
+                for (let node of nodes) {
+                    node.to = to;
+                    if (fn)
+                        node.value = computeValueArrayFunction(
+                            fn,
+                            ...node.value
+                        );
+                }
+                arrNodes = arrNodes.concat(nodes);
+            }
+        } else if (Array.isArray(from)) {
+            let fn;
             isValidValueArray(from);
             fn = from.at(-1);
             from = from.slice(0, -1);
-            if (from.length === 1) {
-                nodes = jp.nodes(source, from.at(0));
-            } else {
-                let cpath = [];
-                let cvalues = [];
-                for (let fromv of from) {
-                    let tvalues = [];
-                    let tpath = [];
-                    let nodes = jp.nodes(source, fromv);
-                    for (let node of nodes) {
-                        tpath.push(node.path);
-                        tvalues.push(node.value);
-                    }
-                    cpath.push(tpath);
-                    cvalues.push(tvalues);
+            let cpath = [];
+            let cvalues = [];
+            for (let fromv of from) {
+                let tvalues = [];
+                let tpath = [];
+                let nodes = jp.nodes(source, fromv);
+                for (let node of nodes) {
+                    tpath.push(node.path);
+                    tvalues.push(node.value);
                 }
-                cvalues = cvalues.map((arr) => {
-                    if (arr.length === 0) {
-                        return [undefined];
-                    } else return arr;
-                });
-                let cproductv = cartesian(...cvalues);
-                let cproductp = cartesian(...cpath);
-                let values = [];
-                for (let product of cproductv) {
-                    let val = computeValueArrayFunction(fn, ...product);
-                    values.push(val);
+                cpath.push(tpath);
+                cvalues.push(tvalues);
+            }
+            cvalues = cvalues.map((arr) => {
+                if (arr.length === 0) {
+                    return [undefined];
+                } else return arr;
+            });
+            let cproductv = cartesian(...cvalues);
+            let cproductp = cartesian(...cpath);
+            let values = [];
+            for (let product of cproductv) {
+                let val = computeValueArrayFunction(fn, ...product);
+                values.push(val);
+            }
+            if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
+                for (let value of values) {
+                    commonProps = addProp(commonProps, to, value);
                 }
-                if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
-                    for (let value of values) {
-                        commonProps = addProp(commonProps, to, value);
-                    }
-                    continue;
-                }
-                let cnodes = values.map((value, i) => {
-                    return {
-                        value,
-                        path: cproductp[i],
-                        to,
-                    };
-                });
-                arrNodes = arrNodes.concat(cnodes);
                 continue;
             }
+            let cnodes = values.map((value, i) => {
+                return {
+                    value,
+                    path: cproductp[i],
+                    to,
+                };
+            });
+            arrNodes = arrNodes.concat(cnodes);
         }
-        nodes = nodes ? nodes : jp.nodes(source, from);
-        if (nodes.length === 0) continue;
-        let lastNumberIndex = nodes[0].path.findLastIndex((n) =>
-            Number.isInteger(n)
-        );
-        let isNotCommonProp =
-            lastNumberIndex !== nodes[0].path.length - 1 &&
-            (nodes.length > 1 ||
-                nodes[0].path.filter((n) => Number.isInteger(n)).length > 1);
-        if (!isNotCommonProp) {
-            let value = nodes[0].value;
-            if (fn) value = computeValueArrayFunction(fn, value);
-            commonProps = addProp(commonProps, to, value);
-            continue;
-        }
-        for (let node of nodes) {
-            node.to = to;
-            if (fn) node.value = computeValueArrayFunction(fn, ...node.value);
-        }
-        arrNodes = arrNodes.concat(nodes);
     }
     arrNodes.sort((a, b) => b.path.length - a.path.length);
     for (let node of arrNodes) {

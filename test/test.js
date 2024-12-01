@@ -1024,3 +1024,127 @@ describe("mapping with multiple from values", () => {
         assert.deepStrictEqual(output, [{ finalPrice: 900 }]);
     });
 });
+describe("adding default values", () => {
+    it("should add a default number", () => {
+        let source = {
+            message: "hi",
+        };
+        let mapping = {
+            "$.id": 12345,
+            "$.message": "$.message",
+        };
+        let target = [
+            {
+                id: 12345,
+                message: "hi",
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+    it("should add a default number an empty source", () => {
+        let source = {};
+        let mapping = {
+            "$.id": 12345,
+            "$.message": "$.message",
+        };
+        let target = [
+            {
+                id: 12345,
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+    it("should add a default string", () => {
+        let source = {
+            message: "hi",
+        };
+        let mapping = {
+            "$.sender": "automatic",
+            "$.message": "$.message",
+        };
+        let target = [
+            {
+                sender: "automatic",
+                message: "hi",
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+    it("should add a default object", () => {
+        let source = {
+            message: "hi",
+        };
+        let mapping = {
+            "$.message": "$.message",
+            "$.users": {
+                name: "AB",
+                age: 31,
+            },
+        };
+        let target = [
+            {
+                message: "hi",
+                users: {
+                    name: "AB",
+                    age: 31,
+                },
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+    it("should add a default boolean", () => {
+        let source = {
+            message: "hi",
+        };
+        let mapping = {
+            "$.message": "$.message",
+            "$.active": true,
+        };
+        let target = [
+            {
+                message: "hi",
+                active: true,
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+    it("should add a default null", () => {
+        let source = {
+            message: "hi",
+        };
+        let mapping = {
+            "$.message": "$.message",
+            "$.number": null,
+        };
+        let target = [
+            {
+                message: "hi",
+                number: null,
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+    it("should add a default array", () => {
+        let source = {
+            message: "hi",
+        };
+        let mapping = {
+            "$.message": "$.message",
+            "$.users": ["A", 12, { name: "AAB" }],
+        };
+        let target = [
+            {
+                message: "hi",
+                users: ["A", 12, { name: "AAB" }],
+            },
+        ];
+        let output = mapObj(source, mapping);
+        assert.deepStrictEqual(output, target);
+    });
+});
