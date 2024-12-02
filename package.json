@@ -16,7 +16,8 @@
     ],
     "scripts": {
         "test": "node --test",
-        "debug": "npm test -- --inspect-brk"
+        "debug": "npm test -- --inspect-brk",
+        "release": "release-it"
     },
     "dependencies": {
         "jsonpath": "1.1.1"
@@ -33,5 +34,8 @@
         "type": "git",
         "url": "git+https://github.com/brunocarpio/mappingutils.git"
     },
-    "license": "MIT"
+    "license": "MIT",
+    "devDependencies": {
+        "release-it": "^17.1.1"
+    }
 }

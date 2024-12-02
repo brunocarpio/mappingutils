@@ -2,6 +2,8 @@
 
 Lightweight JSON transformation utility.
 
+You can use [this playground ](https://brunocarpio.github.io/mappingutils-playground/) to test out your mappings!
+
 ## Table of Contents
 - [Installation](#installation)
 - [Basic usage](#basic-usage)
@@ -18,7 +20,9 @@ Lightweight JSON transformation utility.
 
 ## Installation
 
-`npm install mappingutils`
+```bash
+npm install mappingutils
+```
 
 ## Basic usage
 This package uses JSONPath to query the values from the input objects and to set the values on the target objects.
@@ -241,9 +245,10 @@ console.log(JSON.stringify(outputArr, null, 2));
 ```
 
 ## Running tests
-To ensure that your changes are working as expected, you can run the test suite:
 
-`npm run test`
+```bash
+npm run test
+```
 
 Make sure all tests pass before submitting a pull request.
 
