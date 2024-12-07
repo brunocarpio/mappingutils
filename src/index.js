@@ -301,11 +301,9 @@ export function mapObj(source, mapping) {
             } else {
                 for (let node of nodes) {
                     node.to = to;
-                    if (fn)
-                        node.value = computeValueArrayFunction(
-                            fn,
-                            ...node.value
-                        );
+                    if (fn) {
+                        node.value = computeValueArrayFunction(fn, node.value);
+                    }
                 }
                 arrNodes = arrNodes.concat(nodes);
             }

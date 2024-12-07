@@ -887,6 +887,53 @@ describe("mapping with functions", () => {
         let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
+    it("should apply function to object", () => {
+        let source = {
+            items: [
+                {
+                    item_id: "ITEM-001",
+                    description: "Wireless Keyboard",
+                    quantity: 1,
+                    unit_price: 49.99,
+                    total: 49.99,
+                },
+                {
+                    item_id: "ITEM-002",
+                    description: "Bluetooth Mouse",
+                    quantity: 2,
+                    unit_price: 25.5,
+                    total: 51.0,
+                },
+            ],
+        };
+        let mapping = {
+            "$.line_items[]": [
+                "$.items[*]",
+                (item) => {
+                    return {
+                        item_sku: item.item_id,
+                        item_desc: item.description,
+                    };
+                },
+            ],
+        };
+        let target = [
+            {
+                line_items: [
+                    {
+                        item_sku: "ITEM-001",
+                        item_desc: "Wireless Keyboard",
+                    },
+                    {
+                        item_sku: "ITEM-002",
+                        item_desc: "Bluetooth Mouse",
+                    },
+                ],
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
 });
 describe("mapping with multiple from values", () => {
     it("should map and concatenate properties using a function", () => {
