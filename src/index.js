@@ -160,13 +160,13 @@ function isFromValueDefault(from) {
  * @returns {boolean}
  */
 function isCommonProp(nodes) {
+    if (nodes.length > 1) return false;
     let lastNumberIndex = nodes[0].path.findLastIndex((n) =>
         Number.isInteger(n)
     );
     return !(
         lastNumberIndex !== nodes[0].path.length - 1 &&
-        (nodes.length > 1 ||
-            nodes[0].path.filter((n) => Number.isInteger(n)).length > 1)
+        nodes[0].path.filter((n) => Number.isInteger(n)).length > 1
     );
 }
 
@@ -378,11 +378,13 @@ export function mapObj(source, mapping) {
         }
         indexToObj.set(key, obj);
     }
-    if (indexToObj.size === 0) {
-        return Object.keys(commonProps).length > 0 ? [commonProps] : [];
-    }
-    for (let obj of indexToObj.values()) {
-        Object.assign(obj, commonProps);
+    if (Object.keys(commonProps).length > 0) {
+        if (indexToObj.size === 0) {
+            return [commonProps];
+        }
+        for (let obj of indexToObj.values()) {
+            Object.assign(obj, commonProps);
+        }
     }
     if (propsToMerge.size > 0) {
         let indexParentToObjArr = new Map();
