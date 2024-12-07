@@ -590,6 +590,51 @@ describe("mapping array values in the target object", () => {
         let arr = mapObj(sourceWithMissingProps, mapping);
         assert.deepEqual(arr, target);
     });
+    it("should merge an array value", () => {
+        let source = {
+            items: [
+                {
+                    item_id: "ITEM-001",
+                    description: "Wireless Keyboard",
+                    quantity: 1,
+                    unit_price: 49.99,
+                    total: 49.99,
+                },
+                {
+                    item_id: "ITEM-002",
+                    description: "Bluetooth Mouse",
+                    quantity: 2,
+                    unit_price: 25.5,
+                    total: 51.0,
+                },
+            ],
+        };
+        let mapping = {
+            "$.line_items[]": "$.items[*]",
+        };
+        let target = [
+            {
+                line_items: [
+                    {
+                        item_id: "ITEM-001",
+                        description: "Wireless Keyboard",
+                        quantity: 1,
+                        unit_price: 49.99,
+                        total: 49.99,
+                    },
+                    {
+                        item_id: "ITEM-002",
+                        description: "Bluetooth Mouse",
+                        quantity: 2,
+                        unit_price: 25.5,
+                        total: 51.0,
+                    },
+                ],
+            },
+        ];
+        let arr = mapObj(source, mapping);
+        assert.deepEqual(arr, target);
+    });
 });
 describe("mapping with filters in the source", () => {
     let source = `

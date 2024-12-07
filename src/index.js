@@ -42,6 +42,9 @@ function findParentPath(path, level) {
         if (Number.isInteger(path[i])) occurrence++;
         if (occurrence === level) return path.slice(0, i + 1);
     }
+    if (occurrence < level) {
+        return path.slice(0, -1);
+    }
     return null;
 }
 
@@ -270,11 +273,7 @@ export function mapObj(source, mapping) {
     for (let [to, from] of Object.entries(mapping)) {
         if (from === undefined) continue;
         if (keyIncludesBrackets(to) && keyHasValidBrackets(to)) {
-            if (to.slice(-2) !== "[]") {
-                propsToMerge.add(to.substring(0, to.lastIndexOf("[]") + 2));
-            } else {
-                propsToMerge.add(to);
-            }
+            propsToMerge.add(to);
         }
         if (isFromValueDefault(from)) {
             commonProps = addProp(
@@ -356,27 +355,29 @@ export function mapObj(source, mapping) {
             arrNodes = arrNodes.concat(cnodes);
         }
     }
-    arrNodes.sort((a, b) => b.path.length - a.path.length);
-    for (let node of arrNodes) {
-        if (node.ignore) continue;
-        let key = findParentPath(node.path, 1)?.toString();
-        let obj = indexToObj.get(key) ?? {};
-        obj = addProp(obj, node.to, node.value);
-        let parentPath = findParentPath(node.path, 2);
-        if (parentPath) {
-            let parentNodes = arrNodes.filter(
-                (otherNode) =>
-                    includesPath(otherNode.path, parentPath) &&
-                    otherNode.path.length < node.path.length
-            );
-            if (parentNodes && parentNodes.length > 0) {
-                for (let pNode of parentNodes) {
-                    pNode.ignore = true;
-                    obj = addProp(obj, jp.stringify(pNode.to), pNode.value);
+    if (arrNodes.length > 0) {
+        arrNodes.sort((a, b) => b.path.length - a.path.length);
+        for (let node of arrNodes) {
+            if (node.ignore) continue;
+            let key = findParentPath(node.path, 1)?.toString();
+            let obj = indexToObj.get(key) ?? {};
+            obj = addProp(obj, node.to, node.value);
+            let parentPath = findParentPath(node.path, 2);
+            if (parentPath) {
+                let parentNodes = arrNodes.filter(
+                    (otherNode) =>
+                        includesPath(otherNode.path, parentPath) &&
+                        otherNode.path.length < node.path.length
+                );
+                if (parentNodes && parentNodes.length > 0) {
+                    for (let pNode of parentNodes) {
+                        pNode.ignore = true;
+                        obj = addProp(obj, jp.stringify(pNode.to), pNode.value);
+                    }
                 }
             }
+            indexToObj.set(key, obj);
         }
-        indexToObj.set(key, obj);
     }
     if (Object.keys(commonProps).length > 0) {
         if (indexToObj.size === 0) {
@@ -389,22 +390,27 @@ export function mapObj(source, mapping) {
     if (propsToMerge.size > 0) {
         let indexParentToObjArr = new Map();
         for (let to of propsToMerge.values()) {
-            for (let [k, v] of indexToObj.entries()) {
-                let indexParent = strToPath(k);
-                let parentPath = findParentPath(indexParent, 2);
-                if (parentPath) {
-                    let arr =
-                        indexParentToObjArr.get(parentPath.toString()) ?? [];
-                    arr.push(v);
-                    indexParentToObjArr.set(parentPath.toString(), [
-                        mergeObjArr(arr, to),
+            let nodesMatch = arrNodes.filter((node) => node.to === to);
+            for (let node of nodesMatch) {
+                let oldKey = findParentPath(node.path, 1)?.toString() ?? "";
+                let newKey = findParentPath(node.path, 2)?.toString();
+                let foundNode = indexToObj.get(oldKey);
+                if (foundNode) {
+                    indexToObj.delete(oldKey);
+                    let arr = indexParentToObjArr.get(newKey) ?? [];
+                    arr.push(foundNode);
+                    indexParentToObjArr.set(newKey, [
+                        mergeObjArr(
+                            arr,
+                            to.substring(0, to.lastIndexOf("[]") + 2)
+                        ),
                     ]);
-                } else {
-                    indexParentToObjArr.set(indexParent, [v]);
                 }
             }
         }
-        return Array.from(indexParentToObjArr.values()).flat();
+        return Array.from(
+            new Map([...indexParentToObjArr, ...indexToObj]).values()
+        ).flat();
     } else {
         return Array.from(indexToObj.values()).flat();
     }
