@@ -13,22 +13,6 @@ let cartesian = (...pairs) =>
     pairs.reduce((a, b) => a.flatMap((ae) => b.map((be) => [ae, be].flat())));
 
 /**
- * Converts a string to a node path
- * Ex: '$,items,0,availableCountries,0,country' =>
- * ['$', 'items', 0, 'availableCountries', 0, 'country']
- * @param {string} str - A path string
- * @returns {(string|number)[]} The converted string to node path
- */
-function strToPath(str) {
-    return str.split(",").map((v) => {
-        if (!Number.isNaN(+v)) {
-            return +v;
-        }
-        return v;
-    });
-}
-
-/**
  * Finds the upper level array type node path
  * Ex: findParent(['$', 'items', 0, 'availableCountries', 0, 'country'], 2)
  * returns ['$', 'items', 0]
