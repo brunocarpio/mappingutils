@@ -1,7 +1,7 @@
 {
     "name": "mappingutils",
     "description": "Lightweight JSON transformation utility.",
-    "version": "2.1.3",
+    "version": "2.1.4",
     "author": "bcarpio181@gmail.com",
     "type": "module",
     "types": "dist/index.d.ts",
