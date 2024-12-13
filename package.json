@@ -11,11 +11,10 @@
     "main": "src/index.js",
     "module": "src/index.js",
     "files": [
-        "src",
-        "*.d.ts"
+        "dist"
     ],
     "scripts": {
-        "test": "node --test",
+        "test": "node --experimental-strip-types --test",
         "debug": "npm test -- --inspect-brk",
         "release": "release-it",
         "build": "tsc --build"
@@ -38,6 +37,7 @@
     "license": "MIT",
     "devDependencies": {
         "@types/jsonpath": "^0.2.4",
+        "@types/node": "^22.10.2",
         "release-it": "^17.1.1"
     }
 }
