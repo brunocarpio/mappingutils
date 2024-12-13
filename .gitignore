@@ -1,3 +1,5 @@
 node_modules/
 .env
 .npmrc
+tsconfig.tsbuildinfo
+dist
