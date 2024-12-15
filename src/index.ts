@@ -1,6 +1,6 @@
 import jp, { type PathComponent } from "jsonpath";
 
-type Node = ReturnType<typeof jp.nodes>[0];
+type Node = ReturnType<typeof jp.nodes>[number];
 
 type ExtendedNode = Node & {
     to?: string;
@@ -8,8 +8,10 @@ type ExtendedNode = Node & {
 }
 
 type mapping = {
-    [key: string]: any;
+    [key: string]: string | number | arrayValueMapping | Function;
 }
+
+type arrayValueMapping = [...string[], Function];
 
 type NodePath = PathComponent[];
 
@@ -26,7 +28,7 @@ function cartesian(...pairs: any[][]): any[][] {
  * findParent(['$', 'items', 0, 'availableCountries', 0, 'country'], 2)
  * returns ['$', 'items', 0]
  */
-function findParentPath(path: NodePath, level: number): NodePath | null {
+function findParentPath(path: NodePath, level: number): NodePath {
     let occurrence = 0;
     for (let i = path.length - 1; i > 0; i--) {
         if (Number.isInteger(path[i])) occurrence++;
@@ -35,7 +37,7 @@ function findParentPath(path: NodePath, level: number): NodePath | null {
     if (occurrence < level) {
         return path.slice(0, -1);
     }
-    return null;
+    return [];
 }
 
 /**
@@ -50,25 +52,24 @@ function includesPath(path: NodePath, otherPath: NodePath): boolean {
     return true;
 }
 
-function keyHasValidBrackets(to: string): boolean {
-    if (to.includes("[") && to.at(to.indexOf("[") + 1) !== "]") {
+function keyHasValidBrackets(key: string): boolean {
+    if (key.includes("[") && key.at(key.indexOf("[") + 1) !== "]") {
         throw new Error("Expecting closing ']' after '['");
     }
-    if (to.includes("]") && to.at(to.indexOf("]") - 1) !== "[") {
+    if (key.includes("]") && key.at(key.indexOf("]") - 1) !== "[") {
         throw new Error("Expecting openning '[' before ']'");
     }
-    let next = to.indexOf("]") + 1;
-    if (next > 0 && next < to.length)
-        return keyHasValidBrackets(to.substring(next));
+    let next = key.indexOf("]") + 1;
+    if (next > 0 && next < key.length)
+        return keyHasValidBrackets(key.substring(next));
     else return true;
 }
 
 function keyIncludesBrackets(to: string): boolean {
-    if (to.includes("[") || to.includes("]")) return true;
-    else return false;
+    return to.includes("[") || to.includes("]");
 }
 
-function isValidValueArray(from: Array<string | Function>): boolean {
+function isValidArrayValue(from: arrayValueMapping): boolean {
     if (from.length === 1 || from.length === 0) {
         throw new Error(
             "the array should contain at least one argument and the function"
@@ -86,15 +87,15 @@ function isValidValueArray(from: Array<string | Function>): boolean {
     return true;
 }
 
-function computeValueArrayFunction(fn: Function, ...args: Array<string>): object | string {
-    let clean = args.map((arg) => {
+function computeFunction(fn: Function, ...args: string[]): Exclude<any, undefined | Function> {
+    let cleanedArgs = args.map((arg) => {
         if (!arg) {
             return "";
         } else {
             return arg;
         }
     });
-    let computed = fn(...clean);
+    let computed = fn(...cleanedArgs);
     if (typeof computed === "function") {
         throw new Error("the function cannot return a function type value");
     }
@@ -104,22 +105,22 @@ function computeValueArrayFunction(fn: Function, ...args: Array<string>): object
     return computed;
 }
 
-function isValidFromString(from: any): boolean {
+function isValidFromString(from: unknown): boolean {
     return typeof from === "string" && !from.startsWith("$.");
 }
 
-function isValidFromArray(from: any): boolean {
+function isValidFromArray(from: unknown): boolean {
     return Array.isArray(from) &&
         (from.length === 0 ||
             typeof from.at(0) !== "string" ||
             isValidFromString(from.at(0)));
 }
 
-function isValidFromObject(from: any): boolean {
+function isValidFromObject(from: unknown): boolean {
     return typeof from === "object" && !Array.isArray(from) && from !== null;
 }
 
-function isFromValueDefault(from: any): boolean {
+function isDefaultValue(from: unknown): boolean {
     return (
         typeof from === "number" ||
         isValidFromObject(from) ||
@@ -130,7 +131,7 @@ function isFromValueDefault(from: any): boolean {
     );
 }
 
-function isCommonProp(nodes: Array<ExtendedNode>): boolean {
+function isCommonProp(nodes: ExtendedNode[]): boolean {
     if (nodes.length === 1) {
         let node = nodes[0];
         let lastNumberIndex = node?.path.findLastIndex((n) =>
@@ -145,7 +146,7 @@ function isCommonProp(nodes: Array<ExtendedNode>): boolean {
     }
 }
 
-function isSingleFromValue(from: any): boolean {
+function isSingleValue(from: any): boolean {
     return (
         typeof from === "string" || (Array.isArray(from) && from.length === 2)
     );
@@ -178,7 +179,7 @@ export function addProp(obj: object, key: string, value: any): object {
  * @param prop - The path to the array property to merge.
  * @returns A deep copy of the first object in `objArr`, with its `prop` array containing the concatenated values from all objects in the `objArr`.
  */
-export function mergeObjArr(objArr: Array<object>, prop: string): object {
+export function mergeObjArr(objArr: object[], prop: string): object {
     objArr = structuredClone(objArr);
     let firstObj = objArr.shift() ?? {};
     if (keyIncludesBrackets(prop) && keyHasValidBrackets(prop)) {
@@ -211,13 +212,13 @@ export function mapObj(source: object, mapping: mapping): object[] {
     let commonProps = {};
     let propToObj = new Map<string, object>();
     let propsToMerge = new Set<string>();
-    let arrNodes: Array<ExtendedNode> = [];
+    let arrNodes: ExtendedNode[] = [];
     for (let [to, from] of Object.entries(mapping)) {
         if (from === undefined) continue;
         if (keyIncludesBrackets(to) && keyHasValidBrackets(to)) {
             propsToMerge.add(to);
         }
-        if (isFromValueDefault(from)) {
+        if (isDefaultValue(from)) {
             commonProps = addProp(
                 commonProps,
                 to,
@@ -225,71 +226,67 @@ export function mapObj(source: object, mapping: mapping): object[] {
             );
             continue;
         }
-        if (isSingleFromValue(from)) {
+        if (isSingleValue(from)) {
             let fn: Function | undefined;
-            let nodes: Array<ExtendedNode>;
-            if (Array.isArray(from)) {
-                isValidValueArray(from);
-                fn = from.at(-1);
-                nodes = jp.nodes(source, from.at(0));
+            let nodes: ExtendedNode[];
+            if (Array.isArray(from) && isValidArrayValue(from)) {
+                fn = from.at(-1) as Function;
+                nodes = jp.nodes(source, from.at(0) as string);
             } else {
-                nodes = jp.nodes(source, from);
+                nodes = jp.nodes(source, from as string);
             }
             if (nodes.length === 0) continue;
             if (isCommonProp(nodes)) {
                 let value = nodes[0]?.value;
-                if (fn) value = computeValueArrayFunction(fn, value);
+                if (fn) value = computeFunction(fn, value);
                 commonProps = addProp(commonProps, to, value);
             } else {
                 for (let node of nodes) {
                     node.to = to;
                     if (fn) {
-                        node.value = computeValueArrayFunction(fn, node.value);
+                        node.value = computeFunction(fn, node.value);
                     }
                 }
                 arrNodes = arrNodes.concat(nodes);
             }
-        } else if (Array.isArray(from)) {
-            let fn: Function;
-            let fromArgs: string[];
-            isValidValueArray(from);
-            fn = from.at(-1);
-            fromArgs = from.slice(0, -1);
-            let cpath: NodePath[][] = [];
-            let cvalues = [];
-            for (let fromv of fromArgs) {
-                let tvalues = [];
-                let tpath: NodePath[] = [];
-                let nodes = jp.nodes(source, fromv);
+        } else if (Array.isArray(from) && isValidArrayValue(from)) {
+            let fn = from.at(-1) as Function;
+            let args = from.slice(0, -1) as string[];
+            let argsPaths: NodePath[][] = [];
+            let argsValues = [];
+            for (let arg of args) {
+                let values = [];
+                let paths: NodePath[] = [];
+                let nodes = jp.nodes(source, arg);
                 for (let node of nodes) {
-                    tpath.push(node.path);
-                    tvalues.push(node.value);
+                    paths.push(node.path);
+                    values.push(node.value);
                 }
-                cpath.push(tpath);
-                cvalues.push(tvalues);
+                argsPaths.push(paths);
+                argsValues.push(values);
             }
-            cvalues = cvalues.map((arr) => {
+            argsValues = argsValues.map((arr) => {
                 if (arr.length === 0) {
                     return [undefined];
                 } else return arr;
             });
-            let cproductv = cartesian(...cvalues);
-            let cproductp: NodePath[] = cartesian(...cpath);
-            let values = [];
-            for (let product of cproductv) {
-                let val = computeValueArrayFunction(fn, ...product);
-                values.push(val);
+            let cartesianValues = cartesian(...argsValues);
+            let cartesianPaths: NodePath[] = cartesian(...argsPaths);
+            let computedValues = [];
+            for (let product of cartesianValues) {
+                let val = computeFunction(fn, ...product);
+                computedValues.push(val);
             }
-            if (!cpath.flat(2).some((el) => Number.isInteger(el))) {
-                for (let value of values) {
+            if (!argsPaths.flat(2).some((el) => Number.isInteger(el))) {
+                for (let value of computedValues) {
                     commonProps = addProp(commonProps, to, value);
                 }
                 continue;
             }
-            let cnodes: ExtendedNode[] = values.map((value, i) => {
+            let cnodes: ExtendedNode[] = computedValues.map((value, i) => {
                 return {
                     value,
-                    path: cproductp[i]!,
+                    path: cartesianPaths[i]!,
                     to,
                 };
             });
