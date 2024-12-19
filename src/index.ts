@@ -146,12 +146,6 @@ function isCommonProp(nodes: ExtendedNode[]): boolean {
     }
 }
 
-function isSingleValue(from: any): boolean {
-    return (
-        typeof from === "string" || (Array.isArray(from) && from.length === 2)
-    );
-}
-
 /**
  * Add a `key` property to the object `obj` with the value `value`.
  * @param obj - The input object.
@@ -226,30 +220,35 @@ export function mapObj(source: object, mapping: mapping): object[] {
             );
             continue;
         }
-        if (isSingleValue(from)) {
-            let fn: Function | undefined;
-            let nodes: ExtendedNode[];
-            if (Array.isArray(from) && isValidArrayValue(from)) {
-                fn = from.at(-1) as Function;
-                nodes = jp.nodes(source, from.at(0) as string);
-            } else {
-                nodes = jp.nodes(source, from as string);
-            }
+        if (typeof from === "string") {
+            let nodes: ExtendedNode[] = jp.nodes(source, from);
             if (nodes.length === 0) continue;
             if (isCommonProp(nodes)) {
-                let value = nodes[0]?.value;
-                if (fn) value = computeFunction(fn, value);
+                commonProps = addProp(commonProps, to, nodes[0]?.value);
+            } else {
+                for (let node of nodes) {
+                    node.to = to;
+                }
+                arrNodes = arrNodes.concat(nodes);
+            }
+        }
+        else if ((Array.isArray(from) && isValidArrayValue(from)) && from.length === 2) {
+            let arg = from.at(0) as string;
+            let fn = from.at(1) as Function;
+            let nodes: ExtendedNode[] = jp.nodes(source, arg);
+            if (nodes.length === 0) continue;
+            if (isCommonProp(nodes)) {
+                let value = computeFunction(fn, nodes[0]?.value);
                 commonProps = addProp(commonProps, to, value);
             } else {
                 for (let node of nodes) {
                     node.to = to;
-                    if (fn) {
-                        node.value = computeFunction(fn, node.value);
-                    }
+                    node.value = computeFunction(fn, node.value);
                 }
                 arrNodes = arrNodes.concat(nodes);
             }
-        } else if (Array.isArray(from) && isValidArrayValue(from)) {
+        }
+        else if ((Array.isArray(from) && isValidArrayValue(from)) && from.length > 2) {
             let fn = from.at(-1) as Function;
             let args = from.slice(0, -1) as string[];
             let argsPaths: NodePath[][] = [];
