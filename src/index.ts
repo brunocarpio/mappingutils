@@ -227,6 +227,7 @@ export function mergeObjArr(objArr: object[], prop: string): object {
  * @param mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
+ *     - The value can be a literal.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
  *     - If a default value is needed, the value can be any valid JSON value.
  *     - If multiple source fields are required for applying a function, provide an array where:
@@ -393,6 +394,7 @@ export function mapObj(source: object, mapping: mapping): object[] {
  * @param mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
+ *     - The value can be a literal.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
  *     - If a default value is needed, the value can be any valid JSON value.
  *     - If multiple source fields are required for applying a sync or async function, provide an array where:
@@ -412,6 +414,7 @@ export async function mapObjAsync(source: object, mapping: mapping): Promise<obj
  * @param mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
+ *     - The value can be a literal.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
  *     - If a default value is needed, the value can be any valid JSON value.
  *     - If multiple source fields are required for applying a function, provide an array where:
@@ -438,6 +441,7 @@ export function mapObjArr(source: object[], mapping: mapping): object[] {
  * @param mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
+ *     - The value can be a literal.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
  *     - If a default value is needed, the value can be any valid JSON value.
  *     - If multiple source fields are required for applying a sync or async function, provide an array where:

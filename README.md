@@ -14,6 +14,8 @@ You can use [this playground ](https://brunocarpio.github.io/mappingutils-playgr
     -   [mergeObjArr(objArr, prop)](#mergeobjarrobjarr-prop)
     -   [mapObj(source, mappings)](#mapobjsource-mappings)
     -   [mapObjArr(source, mappings)](#mapobjarrsource-mappings)
+    -   [mapObjAsync(source, mappings)](#mapobjasyncsource-mappings)
+    -   [mapObjArrAsync(source, mappings)](#mapobjarrasyncsource-mappings)
 -   [Running tests](#running-tests)
 -   [Issue reporting](#issue-reporting)
 -   [Contributing](#contributing)
@@ -119,11 +121,7 @@ import { mergeObjArr } from "mappingutils";
 
 let objArr = [
     { tx_number: 1111, tx_date: "2024-10-26", items: [{ item: "9991" }] },
-    {
-        tx_number: 1112,
-        tx_date: "2024-10-26",
-        items: [{ item: "9992" }, { item: "9993" }],
-    },
+    { tx_number: 1112, tx_date: "2024-10-26", items: [{ item: "9992" }, { item: "9993" }], },
     { tx_number: 1113, tx_date: "2024-10-26", items: [{ item: "9994" }] },
 ];
 
@@ -151,6 +149,7 @@ Each mapping object's key-value pair should use JSONPath syntax:
 
 -   The key represents the target field path in the transformed object.
 -   The value represents the source field path(s) in the source object.
+-   The value can be a literal.
 -   If a single source field is required, the value should be a JSONPath string pointing to that field.
 -   If multiple source fields are required, provide an array where:
     -   Each element before the last is a JSONPath string pointing to a source field.
@@ -255,6 +254,57 @@ console.log(JSON.stringify(outputArr, null, 2));
     },
 ];
 ```
+
+#### mapObjAsync(source, mappings)
+
+Same as `mapObj` but you can use async functions.
+
+-   Example:
+
+```javascript
+import { mapObjAsync } from "mappingutils";
+
+let source =
+{
+    name: "Alice",
+    favoriteBook: "To Kill a Mockingbird",
+}
+
+let mapping = {
+    "$.name": "$.name",
+    "$.favorite_book.title": "$.favoriteBook",
+    "$.favorite_book.author": ["$.favoriteBook", async (title) => {
+        let url = "https://openlibrary.org/search.json?title=" + title.replaceAll(" ", "+");
+        try {
+            let response = await fetch(url);
+            let json = await response.json();
+            return json.docs[0].author_name[0];
+        } catch (error) {
+            console.error(error.message);
+        }
+    }]
+};
+
+let output = await mapObjAsync(source, mapping);
+console.log(JSON.stringify(output, null, 2));
+```
+
+```
+[
+  {
+    "name": "Alice",
+    "favorite_book": {
+      "title": "To Kill a Mockingbird",
+      "author": "Harper Lee"
+    }
+  }
+]
+```
+
+#### mapObjArrAsync(source, mappings)
+
+Transforms each object in the `source` array based on the provided `mapping` transformation.
+The mapping object should follow the same conventions as in the `mapObjAsync` function.
 
 ## Running tests
 
