@@ -8,12 +8,17 @@ type ExtendedNode = Node & {
 }
 
 type mapping = {
-    [key: string]: string | number | arrayValueMapping | Function;
+    [key: string]: any
 }
 
-type arrayValueMapping = [...string[], Function];
-
 type NodePath = PathComponent[];
+
+type Resolvable<T> = T | Promise<T>;
+
+type ResolvableObject<T> = {
+    [K in keyof T]: Resolvable<T[K]>;
+};
+
 
 // Function to compute the cartesian product of input arrays, adapted from Stack Overflow
 // Source: https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
@@ -69,7 +74,8 @@ function keyIncludesBrackets(to: string): boolean {
     return to.includes("[") || to.includes("]");
 }
 
-function isValidArrayValue(from: arrayValueMapping): boolean {
+function isValidArrayValue(from: unknown): boolean {
+    if (!Array.isArray(from)) return false;
     if (from.length === 1 || from.length === 0) {
         throw new Error(
             "the array should contain at least one argument and the function"
@@ -146,6 +152,32 @@ function isCommonProp(nodes: ExtendedNode[]): boolean {
     }
 }
 
+async function resolveNestedPromises<T>(
+    input: ResolvableObject<T> | ResolvableObject<T>[]
+): Promise<T | T[]> {
+    if (input instanceof Promise) {
+        let resolved = await input;
+        return resolveNestedPromises(resolved as ResolvableObject<T> | ResolvableObject<T>[]);
+    }
+    if (Array.isArray(input)) {
+        let resolvedArray = await Promise.all(
+            input.map((item) => resolveNestedPromises(item))
+        );
+        return resolvedArray as T[];
+    }
+    if (input && typeof input === "object") {
+        let resolvedEntries = await Promise.all(
+            Object.entries(input).map(async ([key, value]) => {
+                let resolvedValue = await resolveNestedPromises(value as ResolvableObject<T>);
+                return [key, resolvedValue];
+            })
+        );
+        return Object.fromEntries(resolvedEntries) as T;
+    }
+    return input as T;
+}
+
+
 /**
  * Add a `key` property to the object `obj` with the value `value`.
  * @param obj - The input object.
@@ -196,7 +228,8 @@ export function mergeObjArr(objArr: object[], prop: string): object {
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
- *     - If multiple source fields are required, provide an array where:
+ *     - If a default value is needed, the value can be any valid JSON value.
+ *     - If multiple source fields are required for applying a function, provide an array where:
  *       - Each element before the last is a JSONPath string pointing to a source field.
  *       - The last element is a function that takes the resolved source values as arguments and computes the target field value.
  *
@@ -232,7 +265,7 @@ export function mapObj(source: object, mapping: mapping): object[] {
                 arrNodes = arrNodes.concat(nodes);
             }
         }
-        else if ((Array.isArray(from) && isValidArrayValue(from)) && from.length === 2) {
+        else if (isValidArrayValue(from) && from.length === 2) {
             let arg = from.at(0) as string;
             let fn = from.at(1) as Function;
             let nodes: ExtendedNode[] = jp.nodes(source, arg);
@@ -248,7 +281,7 @@ export function mapObj(source: object, mapping: mapping): object[] {
                 arrNodes = arrNodes.concat(nodes);
             }
         }
-        else if ((Array.isArray(from) && isValidArrayValue(from)) && from.length > 2) {
+        else if (isValidArrayValue(from) && from.length > 2) {
             let fn = from.at(-1) as Function;
             let args = from.slice(0, -1) as string[];
             let argsPaths: NodePath[][] = [];
@@ -354,6 +387,25 @@ export function mapObj(source: object, mapping: mapping): object[] {
 }
 
 /**
+ * Transforms the `source` object  based on the provided `mapping` transformation.
+ *
+ * @param source - A source object to transform.
+ * @param mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
+ *   - The key represents the target field path in the transformed object.
+ *   - The value represents the source field path(s) in the source object.
+ *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
+ *     - If a default value is needed, the value can be any valid JSON value.
+ *     - If multiple source fields are required for applying a sync or async function, provide an array where:
+ *       - Each element before the last is a JSONPath string pointing to a source field.
+ *       - The last element is a function that takes the resolved source values as arguments and computes the target field value.
+ *
+ * @returns An array of transformed objects, with fields derived from applying the `mapping` to the `source` object.
+ */
+export async function mapObjAsync(source: object, mapping: mapping): Promise<object[]> {
+    return resolveNestedPromises(mapObj(source, mapping));
+}
+
+/**
  * Transforms each object in the `source` array based on the provided `mapping` transformation.
  *
  * @param source - An array of source objects to transform.
@@ -361,7 +413,8 @@ export function mapObj(source: object, mapping: mapping): object[] {
  *   - The key represents the target field path in the transformed object.
  *   - The value represents the source field path(s) in the source object.
  *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
- *     - If multiple source fields are required, provide an array where:
+ *     - If a default value is needed, the value can be any valid JSON value.
+ *     - If multiple source fields are required for applying a function, provide an array where:
  *       - Each element before the last is a JSONPath string pointing to a source field.
  *       - The last element is a function that takes the resolved source values as arguments and computes the target field value.
  *
@@ -371,6 +424,32 @@ export function mapObjArr(source: object[], mapping: mapping): object[] {
     let result = [];
     for (let obj of source) {
         let transformed = mapObj(obj, mapping);
+        for (let obj of transformed) {
+            result.push(obj);
+        }
+    }
+    return result;
+}
+
+/**
+ * Transforms each object in the `source` array based on the provided `mapping` transformation.
+ *
+ * @param source - An array of source objects to transform.
+ * @param mapping - A mapping object defining the transformation rules. Each mapping object's key-value pair should use JSONPath syntax:
+ *   - The key represents the target field path in the transformed object.
+ *   - The value represents the source field path(s) in the source object.
+ *     - If a single source field is required, the value should be a JSONPath string pointing to that field.
+ *     - If a default value is needed, the value can be any valid JSON value.
+ *     - If multiple source fields are required for applying a sync or async function, provide an array where:
+ *       - Each element before the last is a JSONPath string pointing to a source field.
+ *       - The last element is a function that takes the resolved source values as arguments and computes the target field value.
+ *
+ * @returns An array of transformed objects, with fields derived from applying the `mapping` to each `source` object.
+ */
+export async function mapObjArrAsync(source: object[], mapping: mapping): Promise<object[]> {
+    let result = [];
+    for (let obj of source) {
+        let transformed = await mapObjAsync(obj, mapping);
         for (let obj of transformed) {
             result.push(obj);
         }
