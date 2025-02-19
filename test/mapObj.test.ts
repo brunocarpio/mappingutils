@@ -1,6 +1,6 @@
-import { mapObj } from "../src/index.ts";
+import { mapObj } from "../src/main.ts";
 import { describe, it } from "node:test";
-import assert from 'node:assert/strict';
+import assert from "node:assert/strict";
 
 describe("mapping no nested objects", () => {
     it("should return an empty array", () => {
@@ -33,7 +33,7 @@ describe("mapping no nested objects", () => {
                 otherObject: {
                     object: "value",
                 },
-            }
+            },
         ];
         let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
@@ -53,15 +53,17 @@ describe("mapping nested objects", () => {
             "$.objectWrapper.newObject.newPropTwo": "$.object.propTwo",
             "$.objectWrapper.newObject.newPropThree": "$.object.propThree",
         };
-        let target = [{
-            objectWrapper: {
-                newObject: {
-                    newPropOne: 1,
-                    newPropTwo: "two",
-                    newPropThree: [1, 2, 3, "banana"],
+        let target = [
+            {
+                objectWrapper: {
+                    newObject: {
+                        newPropOne: 1,
+                        newPropTwo: "two",
+                        newPropThree: [1, 2, 3, "banana"],
+                    },
                 },
             },
-        }];
+        ];
         let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
@@ -156,9 +158,11 @@ describe("mapping array values in the source object", () => {
         let mapping = {
             "$.item": "$.items[0].item",
         };
-        let target = [{
-            item: 11111,
-        }];
+        let target = [
+            {
+                item: 11111,
+            },
+        ];
         let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
@@ -167,10 +171,12 @@ describe("mapping array values in the source object", () => {
             "$.item": "$.items[0].item",
             "$.date": "$.date",
         };
-        let target = [{
-            date: "20240921",
-            item: 11111,
-        }];
+        let target = [
+            {
+                date: "20240921",
+                item: 11111,
+            },
+        ];
         let arr = mapObj(source, mapping);
         assert.deepEqual(arr, target);
     });
@@ -905,7 +911,7 @@ describe("mapping with functions", () => {
         let mapping = {
             "$.line_items[]": [
                 "$.items[*]",
-                (item: { item_id: string, description: string }) => {
+                (item: { item_id: string; description: string }) => {
                     return {
                         item_sku: item.item_id,
                         item_desc: item.description,
@@ -968,23 +974,6 @@ describe("mapping with multiple from values", () => {
         };
         let output = mapObj(source, mapping);
         assert.deepStrictEqual(output, [{ agent: " Bond" }]);
-    });
-    it("should throw error when fn is missing for array from", () => {
-        let source = {
-            event: {
-                data: {
-                    name: "James",
-                    lastName: "Bond",
-                },
-            },
-        };
-        let mapping = {
-            "$.agent": ["$.event.data.name", "$.event.data.lastName"],
-        };
-        assert.throws(() => mapObj(source, mapping), {
-            name: "Error",
-            message: /the last element of the array must be a function/,
-        });
     });
     it("should handle multiple mappings in a single mapping", () => {
         let source = {

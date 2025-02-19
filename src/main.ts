@@ -1,15 +1,17 @@
 import jp, { type PathComponent } from "jsonpath";
+import { isArrPath, isStrPath, parse } from "./lib/validators.ts";
+import { cartesian } from "./lib/cartesian.ts";
 
 type Node = ReturnType<typeof jp.nodes>[number];
 
 type ExtendedNode = Node & {
     to?: string;
     ignore?: boolean;
-}
+};
 
 type mapping = {
-    [key: string]: any
-}
+    [key: string]: any;
+};
 
 type NodePath = PathComponent[];
 
@@ -18,14 +20,6 @@ type Resolvable<T> = T | Promise<T>;
 type ResolvableObject<T> = {
     [K in keyof T]: Resolvable<T[K]>;
 };
-
-
-// Function to compute the cartesian product of input arrays, adapted from Stack Overflow
-// Source: https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
-// Author: rsp
-function cartesian(...pairs: any[][]): any[][] {
-    return pairs.reduce((a, b) => a.flatMap((ae) => b.map((be) => [ae, be].flat())));
-}
 
 /**
  * Finds the upper level array type node path
@@ -57,43 +51,10 @@ function includesPath(path: NodePath, otherPath: NodePath): boolean {
     return true;
 }
 
-function keyHasValidBrackets(key: string): boolean {
-    if (key.includes("[") && key.at(key.indexOf("[") + 1) !== "]") {
-        throw new Error("Expecting closing ']' after '['");
-    }
-    if (key.includes("]") && key.at(key.indexOf("]") - 1) !== "[") {
-        throw new Error("Expecting openning '[' before ']'");
-    }
-    let next = key.indexOf("]") + 1;
-    if (next > 0 && next < key.length)
-        return keyHasValidBrackets(key.substring(next));
-    else return true;
-}
-
-function keyIncludesBrackets(to: string): boolean {
-    return to.includes("[") || to.includes("]");
-}
-
-function isValidArrayValue(from: unknown): boolean {
-    if (!Array.isArray(from)) return false;
-    if (from.length === 1 || from.length === 0) {
-        throw new Error(
-            "the array should contain at least one argument and the function"
-        );
-    }
-    let fn = from.at(-1);
-    if (typeof fn !== "function") {
-        throw new Error("the last element of the array must be a function");
-    }
-    if (fn.length !== from.length - 1) {
-        throw new Error(
-            "the number of arguments should match with the number of arguments in the function"
-        );
-    }
-    return true;
-}
-
-function computeFunction(fn: Function, ...args: string[]): Exclude<any, undefined | Function> {
+function computeFunction(
+    fn: Function,
+    ...args: string[]
+): Exclude<any, undefined | Function> {
     let cleanedArgs = args.map((arg) => {
         if (!arg) {
             return "";
@@ -111,37 +72,11 @@ function computeFunction(fn: Function, ...args: string[]): Exclude<any, undefine
     return computed;
 }
 
-function isValidFromString(from: unknown): boolean {
-    return typeof from === "string" && !from.startsWith("$.");
-}
-
-function isValidFromArray(from: unknown): boolean {
-    return Array.isArray(from) &&
-        (from.length === 0 ||
-            typeof from.at(0) !== "string" ||
-            isValidFromString(from.at(0)));
-}
-
-function isValidFromObject(from: unknown): boolean {
-    return typeof from === "object" && !Array.isArray(from) && from !== null;
-}
-
-function isDefaultValue(from: unknown): boolean {
-    return (
-        typeof from === "number" ||
-        isValidFromObject(from) ||
-        typeof from === "boolean" ||
-        from === null ||
-        isValidFromString(from) ||
-        isValidFromArray(from)
-    );
-}
-
 function isCommonProp(nodes: ExtendedNode[]): boolean {
     if (nodes.length === 1) {
         let node = nodes[0];
         let lastNumberIndex = node?.path.findLastIndex((n) =>
-            Number.isInteger(n)
+            Number.isInteger(n),
         );
         return !(
             lastNumberIndex !== node!.path.length - 1 &&
@@ -153,30 +88,33 @@ function isCommonProp(nodes: ExtendedNode[]): boolean {
 }
 
 async function resolveNestedPromises<T>(
-    input: ResolvableObject<T> | ResolvableObject<T>[]
+    input: ResolvableObject<T> | ResolvableObject<T>[],
 ): Promise<T | T[]> {
     if (input instanceof Promise) {
         let resolved = await input;
-        return resolveNestedPromises(resolved as ResolvableObject<T> | ResolvableObject<T>[]);
+        return resolveNestedPromises(
+            resolved as ResolvableObject<T> | ResolvableObject<T>[],
+        );
     }
     if (Array.isArray(input)) {
         let resolvedArray = await Promise.all(
-            input.map((item) => resolveNestedPromises(item))
+            input.map((item) => resolveNestedPromises(item)),
         );
         return resolvedArray as T[];
     }
     if (input && typeof input === "object") {
         let resolvedEntries = await Promise.all(
             Object.entries(input).map(async ([key, value]) => {
-                let resolvedValue = await resolveNestedPromises(value as ResolvableObject<T>);
+                let resolvedValue = await resolveNestedPromises(
+                    value as ResolvableObject<T>,
+                );
                 return [key, resolvedValue];
-            })
+            }),
         );
         return Object.fromEntries(resolvedEntries) as T;
     }
     return input as T;
 }
-
 
 /**
  * Add a `key` property to the object `obj` with the value `value`.
@@ -208,7 +146,7 @@ export function addProp(obj: object, key: string, value: any): object {
 export function mergeObjArr(objArr: object[], prop: string): object {
     objArr = structuredClone(objArr);
     let firstObj = objArr.shift() ?? {};
-    if (keyIncludesBrackets(prop) && keyHasValidBrackets(prop)) {
+    if (prop.includes("[") && prop.includes("]")) {
         prop = prop.replaceAll("[]", "[*]");
     }
     let arrToMerge = jp.query(firstObj, prop);
@@ -237,24 +175,22 @@ export function mergeObjArr(objArr: object[], prop: string): object {
  * @returns An array of transformed objects, with fields derived from applying the `mapping` to the `source` object.
  */
 export function mapObj(source: object, mapping: mapping): object[] {
+    parse(mapping);
     let commonProps = {};
     let propToObj = new Map<string, object>();
     let propsToMerge = new Set<string>();
     let arrNodes: ExtendedNode[] = [];
+
     for (let [to, from] of Object.entries(mapping)) {
         if (from === undefined) continue;
-        if (keyIncludesBrackets(to) && keyHasValidBrackets(to)) {
+        if (to.includes("[") && to.includes("]")) {
             propsToMerge.add(to);
         }
-        if (isDefaultValue(from)) {
-            commonProps = addProp(
-                commonProps,
-                to,
-                JSON.parse(JSON.stringify(from))
-            );
+        if (!(isStrPath(from) || isArrPath(from))) {
+            commonProps = addProp(commonProps, to, from);
             continue;
         }
-        if (typeof from === "string") {
+        if (isStrPath(from)) {
             let nodes: ExtendedNode[] = jp.nodes(source, from);
             if (nodes.length === 0) continue;
             if (isCommonProp(nodes)) {
@@ -265,8 +201,7 @@ export function mapObj(source: object, mapping: mapping): object[] {
                 }
                 arrNodes = arrNodes.concat(nodes);
             }
-        }
-        else if (isValidArrayValue(from) && from.length === 2) {
+        } else if (isArrPath(from) && from.length === 2) {
             let arg = from.at(0) as string;
             let fn = from.at(1) as Function;
             let nodes: ExtendedNode[] = jp.nodes(source, arg);
@@ -281,8 +216,7 @@ export function mapObj(source: object, mapping: mapping): object[] {
                 }
                 arrNodes = arrNodes.concat(nodes);
             }
-        }
-        else if (isValidArrayValue(from) && from.length > 2) {
+        } else if (isArrPath(from) && from.length > 2) {
             let fn = from.at(-1) as Function;
             let args = from.slice(0, -1) as string[];
             let argsPaths: NodePath[][] = [];
@@ -338,7 +272,7 @@ export function mapObj(source: object, mapping: mapping): object[] {
                 let parentNodes = arrNodes.filter(
                     (otherNode) =>
                         includesPath(otherNode.path, parentPath) &&
-                        otherNode.path.length < node.path.length
+                        otherNode.path.length < node.path.length,
                 );
                 if (parentNodes && parentNodes.length > 0) {
                     for (let pNode of parentNodes) {
@@ -373,14 +307,14 @@ export function mapObj(source: object, mapping: mapping): object[] {
                     propParentToObjArr.set(newKey, [
                         mergeObjArr(
                             arr,
-                            to.substring(0, to.lastIndexOf("[]") + 2)
+                            to.substring(0, to.lastIndexOf("[]") + 2),
                         ),
                     ]);
                 }
             }
         }
         return Array.from(
-            new Map([...propParentToObjArr, ...propToObj]).values()
+            new Map([...propParentToObjArr, ...propToObj]).values(),
         ).flat();
     } else {
         return Array.from(propToObj.values()).flat();
@@ -403,7 +337,10 @@ export function mapObj(source: object, mapping: mapping): object[] {
  *
  * @returns An array of transformed objects, with fields derived from applying the `mapping` to the `source` object.
  */
-export async function mapObjAsync(source: object, mapping: mapping): Promise<object[]> {
+export async function mapObjAsync(
+    source: object,
+    mapping: mapping,
+): Promise<object[]> {
     return resolveNestedPromises(mapObj(source, mapping));
 }
 
@@ -450,7 +387,10 @@ export function mapObjArr(source: object[], mapping: mapping): object[] {
  *
  * @returns An array of transformed objects, with fields derived from applying the `mapping` to each `source` object.
  */
-export async function mapObjArrAsync(source: object[], mapping: mapping): Promise<object[]> {
+export async function mapObjArrAsync(
+    source: object[],
+    mapping: mapping,
+): Promise<object[]> {
     let result = [];
     for (let obj of source) {
         let transformed = await mapObjAsync(obj, mapping);

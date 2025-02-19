@@ -1,6 +1,8 @@
 {
     "$schema": "https://json.schemastore.org/tsconfig",
     "compilerOptions": {
+        "allowJs": true,
+        "allowImportingTsExtensions": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "moduleDetection": "force",
@@ -12,8 +14,12 @@
         "module": "NodeNext",
         "sourceMap": true,
         "outDir": "./dist",
-        "lib": ["ESNext"],
+        "lib": [
+            "ESNext"
+        ],
         "declaration": true
     },
-    "include": ["src/**/*.ts"]
+    "include": [
+        "src/**/*.ts"
+    ]
 }
