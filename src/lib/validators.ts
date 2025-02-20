@@ -1,12 +1,12 @@
 import { preprocess } from "./preprocessor.ts";
-import * as Parser from "../bin/gparser.cjs";
+let Parser = require("../bin/gparser.cjs");
 
 /**
  * @returns true if the specified mapping object is valid against the grammar
  * @throws { Error }
  * This exeception is thrown if the input is not a valid mapping against the grammar
  */
-export function parse(mapping: unknown): boolean {
+export function parse(mapping: object): boolean {
     return Parser.parse(preprocess(mapping));
 }
 
