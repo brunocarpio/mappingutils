@@ -4,7 +4,7 @@
     "version": "2.2.1",
     "author": "bcarpio181@gmail.com",
     "type": "module",
-    "types": "dist/index.d.ts",
+    "types": "dist/main.d.ts",
     "engines": {
         "node": ">=18"
     },

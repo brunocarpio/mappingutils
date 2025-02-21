@@ -71,6 +71,7 @@
     recoverable: (boolean: TRUE when the parser has a error recovery rule available for this particular error)
   }
 */
+/** @type {any} */
 var parser = (function(){
 var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,5],$V1=[6,8],$V2=[1,20],$V3=[1,24],$V4=[1,29],$V5=[1,30],$V6=[1,31],$V7=[1,32],$V8=[8,22],$V9=[6,8,22];
 var parser = {trace: function trace () { },
