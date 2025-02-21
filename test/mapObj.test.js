@@ -1,4 +1,4 @@
-import { mapObj } from "../src/main.ts";
+import { mapObj } from "../dist/main.js";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
@@ -871,11 +871,11 @@ describe("mapping with functions", () => {
         let mapping = {
             "$.book.author": [
                 '$.store.book[?(@.category=="reference")].author',
-                (author: string) => author.toUpperCase(),
+                (author) => author.toUpperCase(),
             ],
             "$.book.title": [
                 '$.store.book[?(@.category=="reference")].title',
-                (title: string) => title.trim(),
+                (title) => title.trim(),
             ],
         };
         let target = [
@@ -911,7 +911,7 @@ describe("mapping with functions", () => {
         let mapping = {
             "$.line_items[]": [
                 "$.items[*]",
-                (item: { item_id: string; description: string }) => {
+                (item) => {
                     return {
                         item_sku: item.item_id,
                         item_desc: item.description,
@@ -951,7 +951,7 @@ describe("mapping with multiple from values", () => {
             "$.agent": [
                 "$.event.data.name",
                 "$.event.data.lastName",
-                (a: string, b: string) => `${a} ${b}`,
+                (a, b) => `${a} ${b}`,
             ],
         };
         let output = mapObj(source, mapping);
@@ -969,7 +969,7 @@ describe("mapping with multiple from values", () => {
             "$.agent": [
                 "$.event.data.name",
                 "$.event.data.lastName",
-                (a: string, b: string) => `${a} ${b}`,
+                (a, b) => `${a} ${b}`,
             ],
         };
         let output = mapObj(source, mapping);
@@ -990,7 +990,7 @@ describe("mapping with multiple from values", () => {
             "$.agent": [
                 "$.event.data.name",
                 "$.event.data.lastName",
-                (a: string, b: string) => `${a} ${b}`,
+                (a, b) => `${a} ${b}`,
             ],
         };
         let output = mapObj(source, mapping);
@@ -1014,7 +1014,7 @@ describe("mapping with multiple from values", () => {
                 "$.person.name",
                 "$.person.lastName",
                 "$.person.details.birthDate",
-                (firstName: string, lastName: string, birthDate: string) => {
+                (firstName, lastName, birthDate) => {
                     const age =
                         new Date().getFullYear() -
                         new Date(birthDate).getFullYear();
@@ -1039,7 +1039,7 @@ describe("mapping with multiple from values", () => {
             "$.fullName": [
                 "$.user.name",
                 "$.user.lastName",
-                (firstName: string, lastName: string) => {
+                (firstName, lastName) => {
                     if (!firstName || !lastName) {
                         throw new Error("Missing name components");
                     }
@@ -1065,7 +1065,7 @@ describe("mapping with multiple from values", () => {
             "$.summary": [
                 "$.event.details.type",
                 "$.event.details.year",
-                (_type: string, _year: string) => {
+                (_type, _year) => {
                     return undefined;
                 },
             ],
@@ -1092,7 +1092,7 @@ describe("mapping with multiple from values", () => {
             "$.finalPrice": [
                 "$.order.item.price",
                 "$.order.discount",
-                (price: number, discount: number) => {
+                (price, discount) => {
                     return price - price * discount;
                 },
             ],

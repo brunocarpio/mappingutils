@@ -1,5 +1,5 @@
-import { preprocess } from "./preprocessor.ts";
-let Parser = require("../bin/gparser.cjs");
+import { preprocess } from "./preprocessor.js";
+import * as Parser from "../bin/gparser.cjs";
 
 /**
  * @returns true if the specified mapping object is valid against the grammar

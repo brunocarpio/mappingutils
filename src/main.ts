@@ -1,6 +1,6 @@
 import jp, { type PathComponent } from "jsonpath";
-import { isArrPath, isStrPath, parse } from "./lib/validators.ts";
-import { cartesian } from "./lib/cartesian.ts";
+import { isArrPath, isStrPath, parse } from "./lib/validators.js";
+import { cartesian } from "./lib/cartesian.js";
 
 type Node = ReturnType<typeof jp.nodes>[number];
 

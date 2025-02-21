@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { parse } from "../src/lib/validators.ts";
+import { parse } from "../dist/lib/validators.js";
 import assert from "node:assert/strict";
 
 describe("parse simple path to path", () => {
