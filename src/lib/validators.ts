@@ -1,5 +1,5 @@
 import { preprocess } from "./preprocessor.js";
-import * as Parser from "../bin/gparser.cjs";
+import parser from "../bin/gparser.js";
 
 /**
  * @returns true if the specified mapping object is valid against the grammar
@@ -7,7 +7,7 @@ import * as Parser from "../bin/gparser.cjs";
  * This exeception is thrown if the input is not a valid mapping against the grammar
  */
 export function parse(mapping: object): boolean {
-    return Parser.parse(preprocess(mapping));
+    return parser.parse(preprocess(mapping));
 }
 
 export function isStrPath(str: unknown) {

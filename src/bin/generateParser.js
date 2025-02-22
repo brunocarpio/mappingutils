@@ -10,7 +10,7 @@ try {
     let parser = Jison.Parser(grammar);
     let source = parser.generate();
     writeFileSync(
-        path.resolve(path.dirname(__filename), "./gparser.cjs"),
+        path.resolve(path.dirname(__filename), "./gparser.js"),
         source,
     );
 } catch (error) {

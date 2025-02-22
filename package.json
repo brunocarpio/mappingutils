@@ -14,8 +14,8 @@
         "dist"
     ],
     "scripts": {
-        "generate": "node --experimental-strip-types  src/bin/generateParser.ts",
-        "test": "node --experimental-strip-types --test",
+        "generate": "node src/bin/generateParser.js",
+        "test": "node --test",
         "debug": "npm test -- --inspect-brk",
         "release": "release-it",
         "build": "tsc --build"
